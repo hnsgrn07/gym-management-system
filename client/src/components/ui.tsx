@@ -276,7 +276,7 @@ export function Dialog({ open, onClose, title, description, children, footer }: 
     <dialog ref={ref} className="dialog" onClose={onClose} onCancel={onClose} aria-labelledby="dlg-title">
       <div className="dialog-head">
         <h2 id="dlg-title">{title}</h2>
-        {description && <p className="muted">{description}</p>}
+        {description && <div className="muted">{description}</div>}
       </div>
       {children && <div className="dialog-body">{children}</div>}
       <div className="dialog-foot">{footer}</div>

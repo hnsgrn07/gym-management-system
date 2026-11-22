@@ -36,7 +36,28 @@ export default function AdminStaff() {
     success: 'Account updated', invalidate: ['/admin/staff'],
   });
   const confirm = useConfirm();
-  const submit = (e: FormEvent) => { e.preventDefault(); void save(); };
+  const submit = async (e: FormEvent) => {
+    e.preventDefault();
+    setErr(null);
+    if (editing === 'new') {
+      if (await confirm({ title: `Create a ${ROLES[f.role].toLowerCase()} account for ${f.full_name || 'this person'}?`, description: ROLE_HINT[f.role], confirmLabel: 'Create account' })) void save();
+      return;
+    }
+    const orig = data?.find((s) => s.id === editing);
+    if (!orig) return;
+    const changes: string[] = [];
+    if (orig.role !== f.role) changes.push(`Role: ${ROLES[orig.role]} → ${ROLES[f.role]}`);
+    if (orig.username !== f.username) changes.push(`Username: @${orig.username} → @${f.username}`);
+    if (orig.full_name !== f.full_name) changes.push(`Name: ${orig.full_name} → ${f.full_name}`);
+    if ((orig.phone ?? '') !== f.phone || (orig.email ?? '') !== f.email) changes.push('Contact details updated');
+    if (f.password) changes.push('Password reset (they’ll be signed out everywhere)');
+    if (!changes.length) { setEditing(null); return; }
+    if (await confirm({
+      title: `Save changes to ${orig.full_name}?`,
+      description: <ul style={{ margin: 0, paddingLeft: 18 }}>{changes.map((c) => <li key={c}>{c}</li>)}</ul>,
+      confirmLabel: 'Save changes',
+    })) void save();
+  };
 
   return (
     <main className="content">

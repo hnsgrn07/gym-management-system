@@ -1,5 +1,7 @@
 import { Save } from 'lucide-react';
 import { useEffect, useState, type FormEvent } from 'react';
+import { useConfirm } from '../../components/confirm';
+import { money } from '../../lib/format';
 import { Button, Checkbox, LoadingRows, PageHeader, Panel, QueryError, SelectField, TextField } from '../../components/ui';
 import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
@@ -17,6 +19,7 @@ const CURRENCIES = [
 export default function AdminSettings() {
   useTitle('Gym settings');
   const { refresh } = useAuth();
+  const confirm = useConfirm();
   const { data, error, refetch } = useApi<Settings>('/admin/settings');
   const [f, setF] = useState<Settings | null>(null);
   useEffect(() => { if (data) setF(data); }, [data]);
@@ -25,7 +28,28 @@ export default function AdminSettings() {
   });
   if (error) return <main className="content narrow"><QueryError error={error} retry={refetch} /></main>;
   if (!f) return <main className="content narrow"><Panel><LoadingRows /></Panel></main>;
-  const submit = (e: FormEvent) => { e.preventDefault(); void save(); };
+  const submit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!data) return;
+    const changes: string[] = [];
+    if (data.gym_name !== f.gym_name) changes.push(`Gym name: “${data.gym_name}” → “${f.gym_name}”`);
+    if (data.open_hours !== f.open_hours) changes.push('Opening hours updated');
+    if (data.currency !== f.currency) changes.push(`Currency: ${data.currency} → ${f.currency || '(blank)'}`);
+    if (Number(data.walkin_fee) !== Number(f.walkin_fee)) changes.push(`Walk-in day pass: ${money(data.walkin_fee)} → ${money(Number(f.walkin_fee))}`);
+    if (Number(data.expiring_days) !== Number(f.expiring_days)) changes.push(`“Expiring soon” warning: ${data.expiring_days} → ${f.expiring_days} days`);
+    if (data.walkin_self_service !== f.walkin_self_service) changes.push(f.walkin_self_service ? 'Walk-in self check-in turned on' : 'Walk-in self check-in turned off');
+    if (data.demo_mode !== f.demo_mode) changes.push(f.demo_mode ? 'Demo accounts shown on sign-in' : 'Demo accounts hidden from sign-in');
+    if (!changes.length) return;
+    const ok = await confirm({
+      title: 'Save gym settings?',
+      description: <>
+        <ul style={{ margin: '0 0 8px', paddingLeft: 18 }}>{changes.map((c) => <li key={c}>{c}</li>)}</ul>
+        Everyone sees the change right away.
+      </>,
+      confirmLabel: 'Save settings',
+    });
+    if (ok) void save();
+  };
   const known = CURRENCIES.some(([c]) => c === f.currency);
 
   return (

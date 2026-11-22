@@ -1,5 +1,6 @@
 import { Pencil, Plus, Save, Tags } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
+import { useConfirm } from '../../components/confirm';
 import { Button, Checkbox, Empty, LoadingRows, Notice, PageHeader, Panel, Pill, QueryError, TextField } from '../../components/ui';
 import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
@@ -29,9 +30,39 @@ export default function AdminPlans() {
     },
     { success: 'Plan saved', invalidate: ['/admin/plans', '/plans'], onSuccess: () => setEditing(null), onError: (e) => { setErr(e.message); return true; } },
   );
-  function submit(e: FormEvent) {
+  const confirm = useConfirm();
+  async function submit(e: FormEvent) {
     e.preventDefault();
-    void save();
+    setErr(null);
+    const price = Number(f.price);
+    const days = Number(f.duration_days);
+    if (editing === 'new') {
+      const ok = await confirm({
+        title: `Add “${f.name || 'this plan'}”?`,
+        description: `${money(price)} for ${days} days${f.active ? '. The front desk can sell it right away.' : ', hidden from sale for now.'}`,
+        confirmLabel: 'Add plan',
+      });
+      if (ok) void save();
+      return;
+    }
+    const orig = data?.find((p) => p.id === editing);
+    if (!orig) return;
+    const changes: string[] = [];
+    if (orig.name !== f.name.trim()) changes.push(`Name: “${orig.name}” → “${f.name.trim()}”`);
+    if (orig.price !== price) changes.push(`Price: ${money(orig.price)} → ${money(price)}`);
+    if (orig.duration_days !== days) changes.push(`Length: ${orig.duration_days} → ${days} days`);
+    if ((orig.description ?? '') !== f.description.trim()) changes.push('Description updated');
+    if (!!orig.active !== f.active) changes.push(f.active ? 'Back on sale' : 'Hidden from sale');
+    if (!changes.length) { setEditing(null); return; }
+    const ok = await confirm({
+      title: `Save changes to ${orig.name}?`,
+      description: <>
+        <ul style={{ margin: '0 0 8px', paddingLeft: 18 }}>{changes.map((c) => <li key={c}>{c}</li>)}</ul>
+        Members who already bought this plan keep what they paid. Changes apply to new sales.
+      </>,
+      confirmLabel: 'Save changes',
+    });
+    if (ok) void save();
   }
   const perDay = Number(f.price) && Number(f.duration_days) ? Number(f.price) / Number(f.duration_days) : null;
 
