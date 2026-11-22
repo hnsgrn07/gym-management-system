@@ -7,7 +7,7 @@ import {
   addStats, getMember, listStats, listWorkouts, memberAttendance, memberMemberships, statsSchema,
   visitSummary, workoutLogs,
 } from '../services/members.ts';
-import { leaderboard, liftSchema, logLift, rankCard, recentLifts, strengthProfile, streakWidget } from '../services/ranking.ts';
+import { coachingProfile, leaderboard, liftSchema, logLift, rankCard, recentLifts, strengthProfile, streakWidget } from '../services/ranking.ts';
 import { HttpError, parse, toId } from '../util.ts';
 
 /** The signed-in member's own data. */
@@ -17,8 +17,10 @@ memberRouter.use(requireRole('member'));
 memberRouter.get('/overview', (req, res) => {
   const id = me(req).id;
   const stats = listStats(id);
+  const profile = getMember(id);
   res.json({
-    profile: getMember(id),
+    profile,
+    coach_league: profile.coach_id ? coachingProfile(profile.coach_id)?.league ?? null : null,
     open_session: openSessionForMember(id) ?? null,
     visits: visitSummary(id),
     latest_stats: stats.at(-1) ?? null,

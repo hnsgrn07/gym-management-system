@@ -9,9 +9,9 @@ import { authRouter } from './routes/auth.ts';
 import { coachRouter } from './routes/coach.ts';
 import { deskRouter } from './routes/desk.ts';
 import { memberRouter } from './routes/member.ts';
-import { leaderboard } from './services/ranking.ts';
+import { coachLeaderboard, leaderboard } from './services/ranking.ts';
 import { getSettings } from './services/settings.ts';
-import { seedDemo, seedDemoLifts } from './seed.ts';
+import { seedDemo, seedDemoCoachLifts, seedDemoLifts } from './seed.ts';
 import { z } from 'zod';
 import { HttpError, parse } from './util.ts';
 
@@ -21,6 +21,9 @@ if (!get('SELECT 1 FROM users LIMIT 1') && process.env.SEED_DEMO !== '0') {
   console.log('First run: demo data created (see README for the demo sign-ins).');
 } else if (getSettings().demo_mode && !get('SELECT 1 FROM lift_logs LIMIT 1')) {
   seedDemoLifts(); // demo databases created before leagues existed
+}
+if (getSettings().demo_mode && !get("SELECT 1 FROM lift_logs l JOIN users u ON u.id = l.member_id WHERE u.role = 'coach' LIMIT 1")) {
+  seedDemoCoachLifts(); // demo databases created before coach rankings existed
 }
 
 const app = express();
@@ -41,10 +44,17 @@ api.get('/plans', requireRole('admin', 'clerk', 'coach', 'member'), (_req, res) 
 });
 api.get('/leaderboard', requireRole('admin', 'clerk', 'coach', 'member'), (req, res) => {
   const q = parse(z.object({
-    board: z.enum(['points', 'strength', 'streak']).default('points'),
+    group: z.enum(['members', 'coaches']).default('members'),
+    board: z.enum(['points', 'strength', 'streak', 'coaching']).default('points'),
     period: z.enum(['month', 'all']).default('month'),
   }), req.query);
   const user = me(req);
+  // The coaches' board is visible to everyone.
+  if (q.group === 'coaches') {
+    res.json(coachLeaderboard(q.board === 'strength' ? 'strength' : 'coaching', q.period, user.role === 'coach' ? user.id : null));
+    return;
+  }
+  if (q.board === 'coaching') throw new HttpError(400, 'Unknown board.');
   // Staff see everyone (hidden members are flagged); members only see people who opted in, plus themselves.
   res.json(leaderboard(q.board, q.period, user.role === 'member' ? user.id : null, { includeHidden: user.role !== 'member' }));
 });

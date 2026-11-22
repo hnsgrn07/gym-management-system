@@ -6,12 +6,50 @@ import {
   addStats, getMember, listStats, listWorkouts, memberAttendance, saveWorkout, searchMembers, statsSchema,
   visitSummary, workoutLogs, workoutSchema,
 } from '../services/members.ts';
-import { leagueMap, leaderboard, liftSchema, logLift, recentLifts, strengthProfile, streakWidget } from '../services/ranking.ts';
+import { coachingProfile, coachRankCard, leagueMap, leaderboard, liftSchema, logLift, recentLifts, strengthProfile, streakWidget } from '../services/ranking.ts';
 import { HttpError, parse, toId } from '../util.ts';
 
 /** Coaches (and admins) read member data and build workouts for them. */
 export const coachRouter = Router();
 coachRouter.use(requireRole('coach', 'admin'));
+
+// ---------- The coach's own ranks (coaching league + lifter league) ----------
+
+function coachOnly(req: import('express').Request) {
+  const user = me(req);
+  if (user.role !== 'coach') throw new HttpError(403, 'Only coaches have coach rankings.');
+  return user.id;
+}
+
+coachRouter.get('/me/ranks', (req, res) => {
+  res.json(coachRankCard(coachOnly(req)));
+});
+
+coachRouter.post('/me/lifts', (req, res) => {
+  const id = coachOnly(req);
+  res.status(201).json(logLift(id, parse(liftSchema, req.body), id));
+});
+
+coachRouter.delete('/me/lifts/:id', (req, res) => {
+  const id = coachOnly(req);
+  const r = run('DELETE FROM lift_logs WHERE id = ? AND member_id = ?', toId(req.params.id), id);
+  if (!r.changes) throw new HttpError(404, 'Lift not found.');
+  res.json({ ok: true });
+});
+
+/** Gender and bodyweight are needed to score a coach's own lifts. */
+coachRouter.put('/me/lifter', (req, res) => {
+  const id = coachOnly(req);
+  const b = parse(z.object({
+    gender: z.enum(['Female', 'Male', '']).nullable().optional(),
+    weight_kg: z.coerce.number().min(30, 'Enter your bodyweight in kg').max(300).nullable().optional(),
+  }), req.body);
+  if (b.gender !== undefined) run('UPDATE users SET gender = ? WHERE id = ?', b.gender || null, id);
+  if (b.weight_kg) {
+    run("INSERT INTO body_stats (member_id, recorded_on, weight_kg, recorded_by) VALUES (?, date('now','localtime'), ?, ?)", id, b.weight_kg, id);
+  }
+  res.json({ ok: true });
+});
 
 coachRouter.get('/members', (req, res) => {
   const q = typeof req.query.q === 'string' ? req.query.q : undefined;
@@ -38,6 +76,7 @@ coachRouter.get('/members/:id', (req, res) => {
       strength: leaderboard('strength', 'all', id).me,
       streak: leaderboard('streak', 'all', id).me,
     },
+    coach_league: (() => { const cid = getMember(id).coach_id; return cid ? coachingProfile(cid)?.league ?? null : null; })(),
   });
 });
 
