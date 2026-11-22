@@ -181,6 +181,24 @@ const migrations: string[] = [
   ALTER TABLE walkins ADD COLUMN converted_member_id INTEGER REFERENCES users(id) ON DELETE SET NULL;
   ALTER TABLE attendance ADD COLUMN was_walkin INTEGER NOT NULL DEFAULT 0;
   `,
+  // 3: strength lifts (for leagues and rankings) and leaderboard visibility.
+  `
+  CREATE TABLE lift_logs (
+    id            INTEGER PRIMARY KEY,
+    member_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    exercise      TEXT NOT NULL CHECK (exercise IN ('squat','bench','deadlift','ohp','pullup')),
+    weight_kg     REAL NOT NULL CHECK (weight_kg >= 0),
+    reps          INTEGER NOT NULL CHECK (reps BETWEEN 1 AND 50),
+    e1rm          REAL NOT NULL,
+    is_pr         INTEGER NOT NULL DEFAULT 0,
+    performed_on  TEXT NOT NULL,
+    notes         TEXT,
+    recorded_by   INTEGER REFERENCES users(id),
+    created_at    TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+  );
+  CREATE INDEX idx_lifts_member ON lift_logs(member_id, exercise, e1rm);
+  ALTER TABLE members ADD COLUMN show_on_leaderboard INTEGER NOT NULL DEFAULT 1;
+  `,
 ];
 
 export function migrate() {

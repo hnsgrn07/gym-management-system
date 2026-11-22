@@ -1,4 +1,4 @@
-import type { ZodType } from 'zod';
+import type { z, ZodTypeAny } from 'zod';
 
 export class HttpError extends Error {
   status: number;
@@ -49,7 +49,7 @@ export function bmiFrom(weightKg: number | null | undefined, heightCm: number | 
 }
 
 /** Validate input with zod, turning the first issue into a readable 400. */
-export function parse<T>(schema: ZodType<T>, data: unknown): T {
+export function parse<S extends ZodTypeAny>(schema: S, data: unknown): z.output<S> {
   const result = schema.safeParse(data);
   if (!result.success) {
     const issue = result.error.issues[0];
