@@ -1,9 +1,9 @@
 import { Check, LogIn, Printer, RefreshCw, UserPlus } from 'lucide-react';
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 import { Button, Notice, PageHeader, Panel, SelectField, TextField } from '../../components/ui';
 import { api } from '../../lib/api';
-import { fmtDate, money } from '../../lib/format';
+import { fmtDate, money, relativeDay } from '../../lib/format';
 import { useAction, useApi, useTitle } from '../../lib/hooks';
 import type { Plan } from '../../lib/types';
 import { MethodPicker, type Method } from './shared';
@@ -13,12 +13,15 @@ const tempPassword = () => {
   return `${words[Math.floor(Math.random() * words.length)]}${Math.floor(1000 + Math.random() * 9000)}`;
 };
 
-interface Created { id: number; member_code: string; username: string; membership: { plan_name: string; start_date: string; end_date: string; amount: number } | null }
+interface WalkinInfo { id: number; full_name: string; phone: string | null; converted_member_id: number | null; visits: number; first_visit: string | null; inside: number; total_paid: number }
+interface Created { id: number; member_code: string; username: string; visits_moved: number; membership: { plan_name: string; start_date: string; end_date: string; amount: number } | null }
 
 export default function NewMember() {
   useTitle('New member');
   const nav = useNavigate();
   const [params] = useSearchParams();
+  const walkinId = params.get('walkin');
+  const walkin = useApi<WalkinInfo>(walkinId ? `/desk/walkins/${walkinId}` : null);
   const plans = useApi<Plan[]>('/plans');
   const coaches = useApi<{ id: number; full_name: string }[]>('/desk/coaches');
   const [f, setF] = useState({
@@ -29,13 +32,16 @@ export default function NewMember() {
   const [method, setMethod] = useState<Method>('cash');
   const [error, setError] = useState<string | null>(null);
   const [created, setCreated] = useState<Created | null>(null);
+  useEffect(() => {
+    if (walkin.data) setF((x) => ({ ...x, full_name: walkin.data.full_name, phone: walkin.data.phone ?? '' }));
+  }, [walkin.data]);
   const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF((x) => ({ ...x, [k]: e.target.value }));
   const plan = plans.data?.find((p) => String(p.id) === planId);
 
   const [create, creating] = useAction(
     () => api<Created>('/desk/members', {
       method: 'POST',
-      body: { ...f, coach_id: f.coach_id ? Number(f.coach_id) : null, password, plan_id: planId ? Number(planId) : null, method },
+      body: { ...f, coach_id: f.coach_id ? Number(f.coach_id) : null, password, plan_id: planId ? Number(planId) : null, method, walkin_id: walkinId ? Number(walkinId) : null },
     }),
     { invalidate: ['/desk', '/coach', '/admin'], onSuccess: (r) => setCreated(r), onError: (e) => { setError(e.message); return true; } },
   );
@@ -59,6 +65,11 @@ export default function NewMember() {
             <div className="row"><span className="success-mark"><Check size={30} /></span>
               <div><h2>{f.full_name}</h2><p className="muted">Member code <strong>{created.member_code}</strong></p></div>
             </div>
+            {created.visits_moved > 0 && (
+              <Notice tone="ok" title={`${created.visits_moved} walk-in ${created.visits_moved === 1 ? 'visit' : 'visits'} moved to their member record`}>
+                Their time in and time out history continues without a gap.
+              </Notice>
+            )}
             {created.membership ? (
               <Notice tone="ok" title={`${created.membership.plan_name} · ${money(created.membership.amount)} paid`}>
                 Active {fmtDate(created.membership.start_date)} to {fmtDate(created.membership.end_date)}.
@@ -83,7 +94,17 @@ export default function NewMember() {
 
   return (
     <main className="content narrow">
-      <PageHeader back={{ to: '/desk/members', label: 'Members' }} title="New member" description="Only the name is required. Everything else can be added later." />
+      <PageHeader back={walkinId ? { to: '/desk', label: 'Front desk' } : { to: '/desk/members', label: 'Members' }}
+        title={walkinId ? 'Make walk-in a member' : 'New member'}
+        description={walkinId ? 'Their walk-in visits and payments move to the new member record.' : 'Only the name is required. Everything else can be added later.'} />
+      {walkin.data && (walkin.data.converted_member_id ? (
+        <Notice tone="warn" title={`${walkin.data.full_name} is already a member`} action={<div><Button size="sm" onClick={() => nav(`/desk/members/${walkin.data!.converted_member_id}`)}>Open their profile</Button></div>} />
+      ) : (
+        <Notice tone="info" title={`Converting walk-in ${walkin.data.full_name}`}>
+          Their {walkin.data.visits} walk-in {walkin.data.visits === 1 ? 'visit' : 'visits'} (first: {relativeDay(walkin.data.first_visit).toLowerCase()}){walkin.data.total_paid > 0 ? ` and ${money(walkin.data.total_paid)} in day passes` : ''} will carry over.
+          {walkin.data.inside > 0 && ' They’re in the gym now and stay timed in as a member.'}
+        </Notice>
+      ))}
       <form className="stack" onSubmit={submit} noValidate>
         <Panel title="Personal details">
           <div className="form-grid">
@@ -134,7 +155,7 @@ export default function NewMember() {
         <div className="form-actions">
           <Button variant="ghost" onClick={() => nav(-1)}>Cancel</Button>
           <Button type="submit" variant="primary" size="lg" icon={UserPlus} loading={creating}>
-            {plan ? `Register & collect ${money(plan.price)}` : 'Register member'}
+            {plan ? `${walkinId ? 'Convert' : 'Register'} & collect ${money(plan.price)}` : walkinId ? 'Make member' : 'Register member'}
           </Button>
         </div>
       </form>

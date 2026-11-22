@@ -163,6 +163,7 @@ export default function DeskHome() {
                       <div className="subtle">{r.w.phone ?? 'No phone'} · {r.w.visits} visits · last {relativeDay(r.w.last_visit)}</div>
                     </div>
                     <div className="actions">
+                      <Button size="sm" variant="ghost" icon={UserPlus} onClick={() => nav(`/desk/members/new?walkin=${r.w.id}`)}>Make member</Button>
                       {r.w.inside ? <Pill tone="ok">In the gym</Pill> : <Button size="sm" icon={LogIn} onClick={() => prefillWalkin(r.w)}>Time in again</Button>}
                     </div>
                   </li>
@@ -195,6 +196,7 @@ export default function DeskHome() {
                           <td data-label="Payment">{r.walkin_id ? (r.paid ? <Pill tone="ok" plain>Paid</Pill> : <Pill tone="bad">Unpaid</Pill>) : <Pill plain>Member</Pill>}</td>
                           <td className="right actions-cell">
                             <div className="row" style={{ justifyContent: 'flex-end', flexWrap: 'nowrap', width: '100%' }}>
+                              {r.walkin_id && <Button size="sm" variant="ghost" icon={UserPlus} aria-label={`Make ${r.name} a member`} title="Make member" onClick={() => nav(`/desk/members/new?walkin=${r.walkin_id}`)} />}
                               {r.walkin_id && !r.paid && <Button size="sm" icon={Banknote} onClick={() => setCollectFor({ id: r.id, name: r.name })}>Collect</Button>}
                               <Button size="sm" icon={LogOut} loading={checkingOut} onClick={() => void checkOut({ id: r.id, name: r.name })}>Time out</Button>
                             </div>

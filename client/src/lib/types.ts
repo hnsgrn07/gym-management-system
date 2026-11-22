@@ -105,6 +105,7 @@ export interface Attendance {
   time_out: string | null;
   auto_closed: number;
   source: string;
+  was_walkin?: number;
 }
 
 export interface Plan {

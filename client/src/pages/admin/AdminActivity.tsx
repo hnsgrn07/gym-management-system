@@ -8,7 +8,7 @@ interface Entry { id: number; action: string; details: string | null; created_at
 
 const LABELS: Record<string, string> = {
   'auth.login': 'Signed in', 'auth.password_changed': 'Changed their password', 'member.create': 'Registered a member',
-  'member.update': 'Edited a member', 'member.password_reset': 'Reset a member’s password', 'membership.sell': 'Sold a membership',
+  'member.update': 'Edited a member', 'member.convert': 'Made a walk-in a member', 'member.password_reset': 'Reset a member’s password', 'membership.sell': 'Sold a membership',
   'attendance.override': 'Timed in without an active membership', 'plan.create': 'Created a plan', 'plan.update': 'Edited a plan',
   'staff.create': 'Added staff', 'staff.update': 'Edited staff', 'user.activate': 'Reactivated an account', 'user.deactivate': 'Deactivated an account',
   'settings.update': 'Changed settings', 'workout.create': 'Created a workout', 'workout.delete': 'Deleted a workout',

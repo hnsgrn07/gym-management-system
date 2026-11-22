@@ -11,7 +11,7 @@ export function AttendanceTable({ rows }: { rows: Attendance[] }) {
         <tbody>
           {rows.map((a) => (
             <tr key={a.id}>
-              <td data-primary data-label="Date"><strong>{fmtDay(a.date)}</strong></td>
+              <td data-primary data-label="Date"><strong>{fmtDay(a.date)}</strong>{a.was_walkin ? <> <Pill tone="walkin" plain>Walk-in</Pill></> : null}</td>
               <td data-label="In">{fmtTime(a.time_in)}</td>
               <td data-label="Out">
                 {a.time_out ? (a.auto_closed ? <Pill tone="warn" plain>Forgot to time out</Pill> : fmtTime(a.time_out)) : <Pill tone="ok">In the gym</Pill>}
