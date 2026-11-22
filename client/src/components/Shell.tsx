@@ -8,6 +8,7 @@ import { flushOutbox, onSynced } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { useNet } from '../lib/hooks';
 import type { Role } from '../lib/types';
+import { useSignOut } from './confirm';
 import { useToast } from './toast';
 import { Avatar } from './ui';
 
@@ -86,7 +87,8 @@ function NetBar() {
 }
 
 export function Shell() {
-  const { user, settings, logout } = useAuth();
+  const { user, settings } = useAuth();
+  const signOut = useSignOut();
   const [more, setMore] = useState(false);
   const location = useLocation();
   useEffect(() => setMore(false), [location.pathname]);
@@ -124,7 +126,7 @@ export function Shell() {
             </div>
           </div>
           <NavLink to="/account"><UserRound size={19} aria-hidden /> Account</NavLink>
-          <a href="#" onClick={(e) => { e.preventDefault(); void logout(); }}><LogOut size={19} aria-hidden /> Sign out</a>
+          <a href="#" onClick={(e) => { e.preventDefault(); void signOut(); }}><LogOut size={19} aria-hidden /> Sign out</a>
         </div>
       </aside>
 
@@ -161,7 +163,7 @@ export function Shell() {
             {overflow.map((i) => (
               <NavLink key={i.to} to={i.to} end={i.end}><i.icon size={20} aria-hidden /> {i.label}</NavLink>
             ))}
-            <button type="button" onClick={() => void logout()}><LogOut size={20} aria-hidden /> Sign out</button>
+            <button type="button" onClick={() => { setMore(false); void signOut(); }}><LogOut size={20} aria-hidden /> Sign out</button>
           </div>
         </>
       )}

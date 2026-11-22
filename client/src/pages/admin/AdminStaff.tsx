@@ -1,5 +1,6 @@
 import { Pencil, Power, Save, UserCog, UserPlus } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
+import { useConfirm } from '../../components/confirm';
 import { Avatar, Button, Empty, LoadingRows, Notice, PageHeader, Panel, Pill, QueryError, SelectField, TextField } from '../../components/ui';
 import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
@@ -34,6 +35,7 @@ export default function AdminStaff() {
   const [toggle] = useAction((s: Staff) => api(`/admin/users/${s.id}/active`, { method: 'PATCH', body: { active: !s.active } }), {
     success: 'Account updated', invalidate: ['/admin/staff'],
   });
+  const confirm = useConfirm();
   const submit = (e: FormEvent) => { e.preventDefault(); void save(); };
 
   return (
@@ -57,7 +59,10 @@ export default function AdminStaff() {
                       <td className="right actions-cell">
                         <div className="row" style={{ justifyContent: 'flex-end', flexWrap: 'nowrap', width: '100%' }}>
                           <Button size="sm" icon={Pencil} onClick={() => start(s)}>Edit</Button>
-                          {s.id !== user?.id && <Button size="sm" variant={s.active ? 'danger' : 'secondary'} icon={Power} onClick={() => void toggle(s)}>{s.active ? 'Deactivate' : 'Reactivate'}</Button>}
+                          {s.id !== user?.id && <Button size="sm" variant={s.active ? 'danger' : 'secondary'} icon={Power} onClick={async () => {
+                            if (s.active && !(await confirm({ title: `Deactivate ${s.full_name}?`, description: 'They’re signed out everywhere and can’t sign in until reactivated. Their past records are kept.', confirmLabel: 'Deactivate', tone: 'danger' }))) return;
+                            void toggle(s);
+                          }}>{s.active ? 'Deactivate' : 'Reactivate'}</Button>}
                         </div>
                       </td>
                     </tr>

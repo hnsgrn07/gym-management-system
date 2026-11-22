@@ -2,6 +2,7 @@ import { Archive, ArchiveRestore, CalendarDays, CheckCircle2, Copy, Dumbbell, Pe
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { AttendanceTable } from '../../components/attendance';
+import { useConfirm } from '../../components/confirm';
 import { StatsChart, StatsForm, StatsTable } from '../../components/stats';
 import {
   Avatar, Button, Dialog, Empty, Facts, LinkButton, LoadingRows, PageHeader, Panel, Pill, QueryError, StatusPill, Tabs, TextareaField,
@@ -43,6 +44,7 @@ function WorkoutList({ detail }: { detail: Detail }) {
   const id = detail.profile.id;
   const nav = useNavigate();
   const [confirm, setConfirm] = useState<Workout | null>(null);
+  const ask = useConfirm();
   const [setStatus] = useAction((w: Workout) => api(`/coach/workouts/${w.id}/status`, { method: 'PATCH', body: { status: w.status === 'active' ? 'archived' : 'active' } }), {
     success: 'Workout updated', invalidate: [`/coach/members/${id}`],
   });
@@ -67,7 +69,10 @@ function WorkoutList({ detail }: { detail: Detail }) {
             actions={<>
               <Button size="sm" icon={Pencil} onClick={() => nav(`/coach/workouts/${w.id}`)}>Edit</Button>
               <Button size="sm" variant="ghost" icon={Copy} aria-label="Duplicate" title="Duplicate" onClick={() => nav(`/coach/members/${id}/workouts/new?from=${w.id}`)} />
-              <Button size="sm" variant="ghost" icon={w.status === 'active' ? Archive : ArchiveRestore} aria-label={w.status === 'active' ? 'Archive' : 'Restore'} title={w.status === 'active' ? 'Archive (hide from member)' : 'Restore'} onClick={() => void setStatus(w)} />
+              <Button size="sm" variant="ghost" icon={w.status === 'active' ? Archive : ArchiveRestore} aria-label={w.status === 'active' ? 'Archive' : 'Restore'} title={w.status === 'active' ? 'Archive (hide from member)' : 'Restore'} onClick={async () => {
+                if (w.status === 'active' && !(await ask({ title: `Archive “${w.title}”?`, description: 'It disappears from the member’s phone. You can restore it any time.', confirmLabel: 'Archive' }))) return;
+                void setStatus(w);
+              }} />
               <Button size="sm" variant="ghost" icon={Trash2} aria-label="Delete" title="Delete" onClick={() => setConfirm(w)} />
             </>}>
             {w.status === 'active' && <>
@@ -110,6 +115,7 @@ export default function CoachMember() {
   const { data, error, refetch } = useApi<Detail>(path);
   const [tab, setTab] = useState<'overview' | 'workouts' | 'stats' | 'visits'>('overview');
   useTitle(data?.profile.full_name ?? 'Member');
+  const confirm = useConfirm();
   const [assign, assigning] = useAction((v: boolean) => api(`${path}/assign`, { method: 'POST', body: { assign: v } }), {
     success: (r: unknown) => ((r as Member).coach_id ? 'You’re now coaching this member' : 'Member released'),
     invalidate: ['/coach'],
@@ -129,8 +135,13 @@ export default function CoachMember() {
         title={<span className="row"><Avatar name={p.full_name} size="lg" /> {p.full_name}</span>}
         description={[p.member_code, p.age && `${p.age} yrs`, p.gender, p.goal && `Goal: ${p.goal}`].filter(Boolean).join(' · ')}
         actions={<>
-          {mine ? <Button icon={UserMinus} loading={assigning} onClick={() => void assign(false)}>Stop coaching</Button>
-            : <Button icon={UserCheck} loading={assigning} onClick={() => void assign(true)}>{p.coach_name ? `Take over from ${p.coach_name}` : 'Coach this member'}</Button>}
+          {mine ? <Button icon={UserMinus} loading={assigning} onClick={async () => {
+              if (await confirm({ title: `Stop coaching ${p.full_name}?`, description: 'They’ll have no coach until someone takes them on. Their workouts and history stay as they are.', confirmLabel: 'Stop coaching', tone: 'danger' })) void assign(false);
+            }}>Stop coaching</Button>
+            : <Button icon={UserCheck} loading={assigning} onClick={async () => {
+              if (p.coach_name && !(await confirm({ title: `Take over from ${p.coach_name}?`, description: `${p.full_name} will become your member and leave ${p.coach_name}’s list.`, confirmLabel: 'Take over', tone: 'primary' }))) return;
+              void assign(true);
+            }}>{p.coach_name ? `Take over from ${p.coach_name}` : 'Coach this member'}</Button>}
           <LinkButton to={`${path}/workouts/new`} variant="primary" icon={Plus}>New workout</LinkButton>
         </>}
       />

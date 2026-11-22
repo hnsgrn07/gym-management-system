@@ -3,6 +3,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router';
 import { App } from './App';
+import { ConfirmProvider } from './components/confirm';
 import { ToastProvider } from './components/toast';
 import { AuthProvider } from './lib/auth';
 import './styles.css';
@@ -23,7 +24,9 @@ createRoot(document.getElementById('root')!).render(
       <BrowserRouter>
         <ToastProvider>
           <AuthProvider>
-            <App />
+            <ConfirmProvider>
+              <App />
+            </ConfirmProvider>
           </AuthProvider>
         </ToastProvider>
       </BrowserRouter>

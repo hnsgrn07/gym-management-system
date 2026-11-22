@@ -2,6 +2,7 @@ import { KeyRound, LogOut, Save } from 'lucide-react';
 import { useEffect, useState, type FormEvent } from 'react';
 import { Button, Notice, PageHeader, Panel, SelectField, TextField } from '../components/ui';
 import { api } from '../lib/api';
+import { useSignOut } from '../components/confirm';
 import { useAuth } from '../lib/auth';
 import { useAction, useApi, useNet, useTitle } from '../lib/hooks';
 import type { Member } from '../lib/types';
@@ -66,7 +67,8 @@ function PasswordForm() {
 }
 
 export default function Account() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
+  const signOut = useSignOut();
   const net = useNet();
   useTitle('Account');
   if (!user) return null;
@@ -80,7 +82,7 @@ export default function Account() {
           {net.pending > 0 && (
             <Notice tone="warn" title={`${net.pending} entries haven’t synced yet`}>Reconnect to the gym Wi-Fi before signing out, or they’ll be lost.</Notice>
           )}
-          <div><Button variant="danger" icon={LogOut} onClick={() => void logout()}>Sign out</Button></div>
+          <div><Button variant="danger" icon={LogOut} onClick={() => void signOut()}>Sign out</Button></div>
         </div>
       </Panel>
     </main>

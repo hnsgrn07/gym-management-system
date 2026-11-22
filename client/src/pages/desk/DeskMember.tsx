@@ -2,6 +2,7 @@ import { CalendarDays, ClipboardList, KeyRound, LogIn, LogOut, Pencil, Power, Re
 import { useEffect, useState } from 'react';
 import { useLocation, useParams } from 'react-router';
 import { AttendanceTable } from '../../components/attendance';
+import { useConfirm } from '../../components/confirm';
 import {
   Avatar, Button, Dialog, Empty, LinkButton, LoadingRows, Notice, PageHeader, Panel, Pill, QueryError, SelectField, StatusPill, TextField,
 } from '../../components/ui';
@@ -22,6 +23,7 @@ function RenewPanel({ member }: { member: Member }) {
   const today = localDate();
   const start = member.paid_through && member.paid_through >= today ? addDays(member.paid_through, 1) : today;
   const end = plan ? addDays(start, plan.duration_days - 1) : null;
+  const confirm = useConfirm();
   const [sell, selling] = useAction(() => api(`/desk/members/${member.id}/memberships`, { method: 'POST', body: { plan_id: Number(planId), method } }), {
     success: `Membership sold${plan ? ` · ${money(plan.price)} collected` : ''}`,
     invalidate: ['/desk', '/coach', '/admin'],
@@ -44,7 +46,9 @@ function RenewPanel({ member }: { member: Member }) {
           <MethodPicker value={method} onChange={setMethod} />
           <Notice tone="info">Covers <strong>{fmtDate(start)}</strong> to <strong>{fmtDate(end)}</strong>. Collect <strong>{money(plan.price)}</strong>.</Notice>
         </>}
-        <div className="form-actions"><Button variant="primary" icon={RefreshCw} disabled={!plan} loading={selling} onClick={() => void sell()}>
+        <div className="form-actions"><Button variant="primary" icon={RefreshCw} disabled={!plan} loading={selling} onClick={async () => {
+          if (plan && await confirm({ title: `Collect ${money(plan.price)} for ${plan.name}?`, description: `${member.full_name} will be covered ${fmtDate(start)} to ${fmtDate(end)}. Make sure you’ve received the payment first.`, confirmLabel: `Yes, collected ${money(plan.price)}` })) void sell();
+        }}>
           {plan ? `Collect ${money(plan.price)} & activate` : 'Sell plan'}
         </Button></div>
       </div>
