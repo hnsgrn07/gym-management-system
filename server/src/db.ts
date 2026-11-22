@@ -176,6 +176,11 @@ const migrations: string[] = [
   );
   CREATE INDEX idx_audit_created ON audit_log(created_at);
   `,
+  // 2: walk-ins can be converted into members; their past visits move to the member record.
+  `
+  ALTER TABLE walkins ADD COLUMN converted_member_id INTEGER REFERENCES users(id) ON DELETE SET NULL;
+  ALTER TABLE attendance ADD COLUMN was_walkin INTEGER NOT NULL DEFAULT 0;
+  `,
 ];
 
 export function migrate() {

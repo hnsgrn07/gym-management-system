@@ -104,8 +104,17 @@ export function checkInWalkin(opts: {
   return tx(() => {
     closeStaleSessions();
     const phone = opts.phone?.trim() || null;
+    const converted = phone
+      ? get<{ code: string }>(
+          `SELECT m.member_code AS code FROM walkins w JOIN members m ON m.user_id = w.converted_member_id
+            WHERE w.phone = ? ORDER BY w.id DESC LIMIT 1`, phone)
+      : undefined;
+    if (converted) {
+      throw new HttpError(409, `This number belongs to member ${converted.code}. Time in as a member instead.`, 'IS_MEMBER');
+    }
     let walkin = phone
-      ? get<{ id: number; full_name: string }>('SELECT id, full_name FROM walkins WHERE phone = ? ORDER BY id DESC LIMIT 1', phone)
+      ? get<{ id: number; full_name: string }>(
+          'SELECT id, full_name FROM walkins WHERE phone = ? AND converted_member_id IS NULL ORDER BY id DESC LIMIT 1', phone)
       : undefined;
     if (walkin) {
       const open = get<{ id: number }>('SELECT id FROM attendance WHERE walkin_id = ? AND time_out IS NULL', walkin.id);

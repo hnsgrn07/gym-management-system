@@ -43,7 +43,7 @@ deskRouter.get('/search', (req, res) => {
     `SELECT w.id, w.full_name, w.phone, MAX(a.time_in) AS last_visit, COUNT(a.id) AS visits,
             EXISTS (SELECT 1 FROM attendance x WHERE x.walkin_id = w.id AND x.time_out IS NULL) AS inside
        FROM walkins w LEFT JOIN attendance a ON a.walkin_id = w.id
-      WHERE w.full_name LIKE ? OR w.phone LIKE ?
+      WHERE (w.full_name LIKE ? OR w.phone LIKE ?) AND w.converted_member_id IS NULL
       GROUP BY w.id ORDER BY last_visit DESC LIMIT 6`,
     like,
     like,
@@ -142,28 +142,41 @@ deskRouter.post('/members', (req, res) => {
       password: z.string().min(6, 'Temporary password needs at least 6 characters').max(200),
       plan_id: z.number().int().nullable().optional(),
       method: method.optional(),
+      walkin_id: z.number().int().nullable().optional(),
     }),
     req.body,
   );
   const by = me(req).id;
   const result = tx(() => {
+    const walkin = body.walkin_id
+      ? get<{ id: number; full_name: string; phone: string | null; converted_member_id: number | null }>('SELECT * FROM walkins WHERE id = ?', body.walkin_id)
+      : undefined;
+    if (body.walkin_id && !walkin) throw new HttpError(404, 'Walk-in not found.');
+    if (walkin?.converted_member_id) throw new HttpError(409, `${walkin.full_name} is already a member.`, 'ALREADY_MEMBER');
     const code = nextMemberCode();
     const username = body.username || code;
     if (get('SELECT 1 FROM users WHERE username = ?', username)) throw new HttpError(409, `The username “${username}” is taken.`);
     const user = run(
       "INSERT INTO users (role, username, password_hash, full_name, email, phone) VALUES ('member', ?, ?, ?, ?, ?)",
-      username, hashPassword(body.password), body.full_name, body.email || null, body.phone || null,
+      username, hashPassword(body.password), body.full_name, body.email || null, body.phone || walkin?.phone || null,
     );
     run(
       `INSERT INTO members (user_id, member_code, birthdate, gender, emergency_contact, goal, coach_id)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
       user.id, code, body.birthdate || null, body.gender || null, body.emergency_contact || null, body.goal || null, body.coach_id ?? null,
     );
+    let moved = 0;
+    if (walkin) {
+      // Same person, one record: past walk-in visits and payments now belong to the member.
+      moved = run('UPDATE attendance SET member_id = ?, walkin_id = NULL, was_walkin = 1 WHERE walkin_id = ?', user.id, walkin.id).changes;
+      run('UPDATE payments SET member_id = ? WHERE walkin_id = ?', user.id, walkin.id);
+      run('UPDATE walkins SET converted_member_id = ? WHERE id = ?', user.id, walkin.id);
+    }
     const membership = body.plan_id
       ? sellMembership({ memberId: user.id, planId: body.plan_id, method: body.method ?? 'cash', byUserId: by })
       : null;
-    audit(by, 'member.create', `${body.full_name} (${code})`);
-    return { id: user.id, member_code: code, username, membership };
+    audit(by, walkin ? 'member.convert' : 'member.create', `${body.full_name} (${code})${walkin ? `, ${moved} walk-in visits kept` : ''}`);
+    return { id: user.id, member_code: code, username, membership, visits_moved: moved };
   });
   res.status(201).json(result);
 });
@@ -200,6 +213,18 @@ deskRouter.post('/members/:id/reset-password', (req, res) => {
   run('DELETE FROM sessions WHERE user_id = ?', id);
   audit(me(req).id, 'member.password_reset', `member #${id}`);
   res.json({ ok: true });
+});
+
+/** A walk-in's details, used to prefill the "make member" form. */
+deskRouter.get('/walkins/:id', (req, res) => {
+  const w = get<{ id: number; full_name: string; phone: string | null; converted_member_id: number | null }>(
+    'SELECT id, full_name, phone, converted_member_id FROM walkins WHERE id = ?', toId(req.params.id));
+  if (!w) throw new HttpError(404, 'Walk-in not found.');
+  const stats = get<{ visits: number; first_visit: string | null; inside: number }>(
+    `SELECT COUNT(*) AS visits, MIN(time_in) AS first_visit, COALESCE(SUM(time_out IS NULL), 0) AS inside
+       FROM attendance WHERE walkin_id = ?`, w.id)!;
+  const paid = get<{ total: number }>('SELECT COALESCE(SUM(amount), 0) AS total FROM payments WHERE walkin_id = ?', w.id)!;
+  res.json({ ...w, ...stats, total_paid: paid.total });
 });
 
 // ---------- Shared lookups for desk forms ----------

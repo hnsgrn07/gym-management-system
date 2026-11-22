@@ -202,8 +202,8 @@ export function workoutLogs(memberId: number, limit = 30) {
 }
 
 export function memberAttendance(memberId: number, limit = 60) {
-  return all<{ id: number; date: string; time_in: string; time_out: string | null; auto_closed: number; source: string }>(
-    `SELECT id, date, time_in, time_out, auto_closed, source FROM attendance
+  return all<{ id: number; date: string; time_in: string; time_out: string | null; auto_closed: number; source: string; was_walkin: number }>(
+    `SELECT id, date, time_in, time_out, auto_closed, source, was_walkin FROM attendance
       WHERE member_id = ? ORDER BY time_in DESC LIMIT ?`,
     memberId,
     limit,
