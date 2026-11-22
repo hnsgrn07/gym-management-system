@@ -199,6 +199,10 @@ const migrations: string[] = [
   CREATE INDEX idx_lifts_member ON lift_logs(member_id, exercise, e1rm);
   ALTER TABLE members ADD COLUMN show_on_leaderboard INTEGER NOT NULL DEFAULT 1;
   `,
+  // 4: coaches can be ranked as lifters too, so staff accounts get an optional gender.
+  `
+  ALTER TABLE users ADD COLUMN gender TEXT;
+  `,
 ];
 
 export function migrate() {

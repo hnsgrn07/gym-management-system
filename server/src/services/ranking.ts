@@ -72,12 +72,15 @@ function scoreRatio(ratio: number, levels: number[]) {
   return 100;
 }
 
-export function leagueFor(score: number | null) {
+/** League thresholds for coaching points over the last 30 days (same seven leagues). */
+export const COACH_LEAGUE_MINS = [0, 100, 250, 450, 700, 1000, 1400];
+
+export function leagueFor(score: number | null, mins: readonly number[] = LEAGUES.map((l) => l.min)) {
   if (score === null) return null;
   let idx = 0;
-  LEAGUES.forEach((l, i) => { if (score >= l.min) idx = i; });
-  const league = LEAGUES[idx];
-  const next = LEAGUES[idx + 1];
+  mins.forEach((m, i) => { if (score >= m) idx = i; });
+  const league = { ...LEAGUES[idx], min: mins[idx] };
+  const next = LEAGUES[idx + 1] ? { ...LEAGUES[idx + 1], min: mins[idx + 1] } : undefined;
   const top = next ? next.min : 100;
   const span = top - league.min;
   const into = score - league.min;
@@ -96,8 +99,10 @@ export function leagueFor(score: number | null) {
 interface MemberBasics { gender: string | null; bodyweight: number | null }
 
 function basics(memberId: number): MemberBasics {
-  const m = get<{ gender: string | null }>('SELECT gender FROM members WHERE user_id = ?', memberId);
-  if (!m) throw new HttpError(404, 'Member not found.');
+  // Members keep gender on their member profile; coaches keep it on their user record.
+  const m = get<{ gender: string | null }>(
+    'SELECT COALESCE(m.gender, u.gender) AS gender FROM users u LEFT JOIN members m ON m.user_id = u.id WHERE u.id = ?', memberId);
+  if (!m) throw new HttpError(404, 'Person not found.');
   const w = get<{ weight_kg: number }>(
     'SELECT weight_kg FROM body_stats WHERE member_id = ? AND weight_kg IS NOT NULL ORDER BY recorded_on DESC, id DESC LIMIT 1',
     memberId,
@@ -235,7 +240,8 @@ const plural = (n: number, w: string) => `${n} ${w}${n === 1 ? '' : 's'}`;
 
 export const POINTS = { visit: 10, workout: 15, pr: 25 };
 
-function periodStart(period: 'month' | 'all') {
+function periodStart(period: 'month' | 'all' | '30d') {
+  if (period === '30d') return addDays(localDate(), -29);
   return period === 'month' ? `${localDate().slice(0, 7)}-01` : '0000-01-01';
 }
 
@@ -345,4 +351,82 @@ export function rankCard(memberId: number) {
 /** Lightweight league lookup for member lists. */
 export function leagueMap(memberIds: number[]) {
   return new Map(memberIds.map((id) => [id, strengthProfile(id)]));
+}
+
+// ---------- Coaches ----------
+
+/**
+ * Coaching points: how a coach's members are doing.
+ * Members count for their current coach; completed workouts count for the coach who wrote them.
+ */
+export const COACH_POINTS = { member_visit: 2, member_pr: 20, workout_done: 10, workout_built: 5, active_member: 15 };
+
+function coachingTable(period: 'month' | 'all' | '30d') {
+  const from = periodStart(period);
+  const rows = all<{ coach_id: number; full_name: string; visits: number; prs: number; done: number; built: number; active: number; members: number }>(
+    `SELECT u.id AS coach_id, u.full_name,
+            (SELECT COUNT(DISTINCT a.member_id || ':' || a.date) FROM attendance a JOIN members m ON m.user_id = a.member_id
+              WHERE m.coach_id = u.id AND a.date >= ?) AS visits,
+            (SELECT COUNT(*) FROM lift_logs l JOIN members m ON m.user_id = l.member_id
+              WHERE m.coach_id = u.id AND l.is_pr = 1 AND l.performed_on >= ?) AS prs,
+            (SELECT COUNT(*) FROM workout_logs wl JOIN workouts w ON w.id = wl.workout_id
+              WHERE w.coach_id = u.id AND date(wl.completed_at) >= ?) AS done,
+            (SELECT COUNT(*) FROM workouts w WHERE w.coach_id = u.id AND date(w.created_at) >= ?) AS built,
+            (SELECT COUNT(*) FROM members m JOIN users mu ON mu.id = m.user_id
+              WHERE m.coach_id = u.id AND mu.active = 1 AND EXISTS (SELECT 1 FROM memberships ms WHERE ms.member_id = m.user_id AND ms.cancelled = 0
+                AND ms.start_date <= date('now','localtime') AND ms.end_date >= date('now','localtime'))) AS active,
+            (SELECT COUNT(*) FROM members m WHERE m.coach_id = u.id) AS members
+       FROM users u WHERE u.role = 'coach' AND u.active = 1`,
+    from, from, from, from,
+  );
+  const P = COACH_POINTS;
+  return rows.map((r) => ({
+    ...r,
+    points: r.visits * P.member_visit + r.prs * P.member_pr + r.done * P.workout_done + r.built * P.workout_built + r.active * P.active_member,
+  }));
+}
+
+/** A coach's coaching league is based on the last 30 days, so it reflects current impact. */
+export function coachingProfile(coachId: number) {
+  const row = coachingTable('30d').find((r) => r.coach_id === coachId);
+  if (!row) return null;
+  return { ...row, league: leagueFor(row.points, COACH_LEAGUE_MINS), rules: COACH_POINTS };
+}
+
+export type CoachBoard = 'coaching' | 'strength';
+
+export function coachLeaderboard(board: CoachBoard, period: 'month' | 'all', viewerId: number | null) {
+  const coaches = all<{ id: number; full_name: string }>("SELECT id, full_name FROM users WHERE role = 'coach' AND active = 1");
+  const coachingLeagues = new Map(coachingTable('30d').map((r) => [r.coach_id, leagueFor(r.points, COACH_LEAGUE_MINS)]));
+  let rows: Omit<Entry, 'rank' | 'is_me'>[];
+  if (board === 'coaching') {
+    rows = coachingTable(period).map((r) => ({
+      member_id: r.coach_id, full_name: r.full_name, member_code: '', value: r.points,
+      detail: [plural(r.members, 'member'), plural(r.prs, 'member PR'), plural(r.done, 'workout') + ' done'].join(' · '),
+      league: coachingLeagues.get(r.coach_id) ?? null,
+    }));
+  } else {
+    rows = coaches
+      .map((c) => ({ c, s: strengthProfile(c.id) }))
+      .filter(({ s }) => s.score !== null)
+      .map(({ c, s }) => ({
+        member_id: c.id, full_name: c.full_name, member_code: '', value: s.score!,
+        detail: `${s.lifts_logged} of 5 lifts scored`, league: s.league,
+      }));
+  }
+  const ranked = rankAll(rows, viewerId);
+  return { board, period, total: ranked.length, entries: ranked, me: ranked.find((r) => r.is_me) ?? null };
+}
+
+/** Everything a coach's own Ranks page needs. */
+export function coachRankCard(coachId: number) {
+  const g = get<{ gender: string | null }>('SELECT gender FROM users WHERE id = ?', coachId);
+  return {
+    coaching: coachingProfile(coachId),
+    coaching_rank: coachLeaderboard('coaching', 'month', coachId).me,
+    lifter: strengthProfile(coachId),
+    lifter_rank: coachLeaderboard('strength', 'all', coachId).me,
+    gender: g?.gender ?? null,
+    recent_lifts: recentLifts(coachId, 30),
+  };
 }
