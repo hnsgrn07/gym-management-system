@@ -83,7 +83,7 @@ export function Login() {
         </form>
 
         {settings.walkin_self_service && (
-          <Link to="/walk-in" className="panel row" style={{ padding: 'var(--s4) var(--s5)', textDecoration: 'none', color: 'inherit' }}>
+          <Link to="/walk-in" className="panel row" style={{ padding: 'var(--s4) var(--s5)', textDecoration: 'none', color: 'var(--text)' }}>
             <span className="avatar walkin"><UserRoundPlus size={18} /></span>
             <span className="grow" style={{ flex: 1 }}>
               <strong>Walk-in? Time in here</strong>

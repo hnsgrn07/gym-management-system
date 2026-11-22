@@ -3,48 +3,59 @@
    Light by default (front desk under fluorescent light, phones on a bright
    gym floor); dark follows the OS setting.
    ========================================================================== */
+@import "@fontsource-variable/big-shoulders-display";
+@import "@fontsource/barlow/400.css";
+@import "@fontsource/barlow/500.css";
+@import "@fontsource/barlow/600.css";
+@import "@fontsource/barlow/700.css";
+
+/* Hi-Vis Training: concrete ground, black shell, one volt accent. */
 :root {
   color-scheme: light;
-  --font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font: "Barlow", ui-sans-serif, system-ui, "Segoe UI", Roboto, sans-serif;
+  --display: "Big Shoulders Display Variable", "Barlow", ui-sans-serif, sans-serif;
 
-  --bg: #f2f4f6;
+  --volt: #d4ff00;
+  --volt-hover: #c4ef00;
+
+  --bg: #e8e7e3;
   --surface: #ffffff;
-  --surface-2: #f7f9fa;
-  --surface-hover: #eef2f4;
-  --border: #dde3e8;
-  --border-strong: #c4ccd4;
-  --text: #0e1b24;
-  --text-2: #475563;
-  --text-3: #67737f;
+  --surface-2: #f4f3f0;
+  --surface-hover: #efeeea;
+  --border: #d8d6d0;
+  --border-strong: #b9b6ae;
+  --text: #121211;
+  --text-2: #464540;
+  --text-3: #66645e;
 
-  --primary: #0a6862;
-  --primary-hover: #08544f;
-  --primary-soft: #e1f1ef;
-  --primary-text: #075550;
-  --on-primary: #ffffff;
-  --focus: #1b8f87;
+  --primary: var(--volt);
+  --primary-hover: var(--volt-hover);
+  --primary-soft: #f2fcc4;
+  --primary-text: #4a6600;
+  --on-primary: #121211;
+  --focus: #121211;
 
-  --shell: #10232a;
-  --shell-2: #173039;
-  --shell-text: #c9d6db;
+  --shell: #111110;
+  --shell-2: #1f1f1d;
+  --shell-text: #b4b3ad;
   --shell-text-strong: #ffffff;
-  --shell-active: #1f4a50;
+  --shell-active: #222220;
 
-  --ok: #17744a;      --ok-bg: #e2f3e9;
-  --warn: #8f5200;    --warn-bg: #fcefd6;
-  --bad: #b3261e;     --bad-bg: #fce7e5;
-  --info: #3d4d5c;    --info-bg: #eaeef2;
-  --walkin: #5b3fa8;  --walkin-bg: #efeafb;
+  --ok: #1b7a3d;      --ok-bg: #e0f3e5;
+  --warn: #8a5200;    --warn-bg: #fdeed1;
+  --bad: #c0271b;     --bad-bg: #fde5e2;
+  --info: #45443f;    --info-bg: #ecebe6;
+  --walkin: #5a3ea6;  --walkin-bg: #eeeafb;
 
-  --chart-1: #0a6862;
-  --chart-2: #d08a1e;
-  --chart-3: #5b3fa8;
-  --chart-grid: #e6eaee;
+  --chart-1: #121211;
+  --chart-2: #e2761b;
+  --chart-3: #5a3ea6;
+  --chart-grid: #e6e4df;
 
-  --radius: 12px;
-  --radius-sm: 8px;
+  --radius: 10px;
+  --radius-sm: 7px;
   --control-h: 44px;
-  --shadow-overlay: 0 12px 32px rgb(14 27 36 / 0.16), 0 2px 6px rgb(14 27 36 / 0.08);
+  --shadow-overlay: 0 16px 40px rgb(0 0 0 / 0.22), 0 2px 6px rgb(0 0 0 / 0.1);
 
   --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 32px; --s7: 48px;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
@@ -53,34 +64,31 @@
 @media (prefers-color-scheme: dark) {
   :root {
     color-scheme: dark;
-    --bg: #0b1216;
-    --surface: #121b20;
-    --surface-2: #162127;
-    --surface-hover: #1b282f;
-    --border: #24333b;
-    --border-strong: #34464f;
-    --text: #e8eef1;
-    --text-2: #a9b7bf;
-    --text-3: #8b9aa3;
-    --primary: #2bb3a8;
-    --primary-hover: #45c4ba;
-    --primary-soft: #133a3a;
-    --primary-text: #6fd6cc;
-    --on-primary: #04211f;
-    --focus: #4fd1c5;
-    --shell: #0e181d;
-    --shell-2: #142228;
-    --shell-active: #19383b;
-    --ok: #5fd39a;    --ok-bg: #12301f;
-    --warn: #f2b04f;  --warn-bg: #36260b;
-    --bad: #ff8a80;   --bad-bg: #3b1513;
-    --info: #b5c3cc;  --info-bg: #1d2a31;
-    --walkin: #b9a3f5; --walkin-bg: #261d3d;
-    --chart-1: #2bb3a8;
-    --chart-2: #f2b04f;
-    --chart-3: #b9a3f5;
-    --chart-grid: #22313a;
-    --shadow-overlay: 0 12px 32px rgb(0 0 0 / 0.5);
+    --bg: #0b0b0a;
+    --surface: #161614;
+    --surface-2: #1c1c1a;
+    --surface-hover: #22221f;
+    --border: #2b2b28;
+    --border-strong: #3d3d39;
+    --text: #f3f3ef;
+    --text-2: #b9b8b1;
+    --text-3: #908f88;
+    --primary-soft: #2a3300;
+    --primary-text: #d4ff00;
+    --focus: #d4ff00;
+    --shell: #050505;
+    --shell-2: #1a1a18;
+    --shell-active: #1d1d1b;
+    --ok: #5fd98a;    --ok-bg: #11301c;
+    --warn: #f5b450;  --warn-bg: #362508;
+    --bad: #ff8b80;   --bad-bg: #3d1411;
+    --info: #c3c2bb;  --info-bg: #23231f;
+    --walkin: #baa5f7; --walkin-bg: #261e3e;
+    --chart-1: #d4ff00;
+    --chart-2: #ff9a40;
+    --chart-3: #baa5f7;
+    --chart-grid: #2a2a27;
+    --shadow-overlay: 0 16px 40px rgb(0 0 0 / 0.6);
   }
 }
 
@@ -92,20 +100,21 @@ html { -webkit-text-size-adjust: 100%; }
 body {
   margin: 0;
   font-family: var(--font);
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1.5;
   color: var(--text);
   background: var(--bg);
   -webkit-font-smoothing: antialiased;
 }
 h1, h2, h3, h4 { margin: 0; line-height: 1.25; letter-spacing: -0.01em; text-wrap: balance; }
-h1 { font-size: 1.6rem; font-weight: 700; }
-h2 { font-size: 1.15rem; font-weight: 650; }
-h3 { font-size: 1rem; font-weight: 650; }
+h1, h2 { font-family: var(--display); text-transform: uppercase; letter-spacing: 0.01em; }
+h1 { font-size: 2.15rem; font-weight: 850; line-height: 1; }
+h2 { font-size: 1.3rem; font-weight: 800; line-height: 1.1; }
+h3 { font-size: 1.02rem; font-weight: 700; }
 p { margin: 0; }
 a { color: var(--primary-text); text-underline-offset: 3px; }
-::selection { background: color-mix(in srgb, var(--primary) 28%, transparent); }
-:focus-visible { outline: 2.5px solid var(--focus); outline-offset: 2px; border-radius: 6px; }
+::selection { background: var(--volt); color: #121211; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; border-radius: 6px; }
 .num, table td, .tabular { font-variant-numeric: tabular-nums; }
 * { scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
@@ -140,7 +149,7 @@ a { color: var(--primary-text); text-underline-offset: 3px; }
 }
 .nav a:hover { background: var(--shell-2); color: var(--shell-text-strong); }
 .nav a.active { background: var(--shell-active); color: var(--shell-text-strong); }
-.nav a.active svg { color: #6fd6cc; }
+.nav a.active svg { color: var(--volt); }
 .nav a:focus-visible { outline-color: var(--primary-hover); }
 .sidebar-foot { margin-top: auto; border-top: 1px solid var(--shell-2); padding-top: var(--s3); display: flex; flex-direction: column; gap: 2px; }
 .sidebar-user { display: flex; align-items: center; gap: var(--s3); padding: var(--s2) var(--s3); }
@@ -551,6 +560,86 @@ dialog.dialog[open] { animation: rise 220ms var(--ease-out); }
 
 .credential { display: flex; justify-content: space-between; align-items: center; gap: var(--s3); padding: var(--s3) var(--s4); background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); }
 .credential code { font-size: 1.05rem; font-weight: 700; font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; }
+
+/* ==========================================================================
+   Hi-Vis Training character
+   Volt is reserved for: primary actions, the current selection, and "live".
+   ========================================================================== */
+:root { --sel-bg: #121211; --sel-fg: var(--volt); }
+@media (prefers-color-scheme: dark) { :root { --sel-bg: var(--volt); --sel-fg: #121211; } }
+
+/* Brand + shell */
+.brand-mark { background: var(--volt); color: #121211; border-radius: 8px; }
+.brand-name { font-family: var(--display); text-transform: uppercase; font-size: 1.3rem; font-weight: 850; letter-spacing: 0.02em; line-height: 1; }
+.brand-role { text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.7rem; font-weight: 600; }
+.nav a { font-weight: 600; }
+.nav a.active { background: var(--shell-active); box-shadow: inset 4px 0 0 var(--volt); }
+.nav-section { text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.68rem; font-weight: 700; }
+.topbar-title { font-family: var(--display); text-transform: uppercase; font-size: 1.25rem; font-weight: 850; letter-spacing: 0.02em; }
+@media (max-width: 959px) {
+  .tabbar a { position: relative; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.66rem; }
+  .tabbar a.active { color: var(--text); }
+  .tabbar a.active::before { content: ""; position: absolute; top: 0; left: 50%; width: 36px; height: 4px; transform: translateX(-50%) skewX(-14deg); background: var(--sel-bg); }
+}
+
+/* Page titles carry a strip of hi-vis floor tape */
+.page-header h1::before {
+  content: ""; display: inline-block; width: 0.42em; height: 0.78em; margin-right: 0.32em;
+  background: var(--volt); transform: skewX(-14deg); vertical-align: -0.02em;
+  box-shadow: 0 0 0 1.5px #121211;
+}
+@media (prefers-color-scheme: dark) { .page-header h1::before { box-shadow: none; } }
+.page-header h1 .row { display: inline-flex; vertical-align: middle; }
+.page-header h1:has(.avatar)::before { display: none; }
+
+/* Numbers read like a scoreboard */
+.fact-label { text-transform: uppercase; letter-spacing: 0.07em; font-size: 0.72rem; font-weight: 700; }
+.fact-value { font-family: var(--display); font-size: 2.2rem; font-weight: 850; letter-spacing: 0; line-height: 1.05; }
+@media (max-width: 720px) { .fact-value { font-size: 1.8rem; } }
+.clock-timer { font-family: var(--display); font-size: 4rem; font-weight: 850; letter-spacing: 0; line-height: 0.95; }
+.table th { text-transform: uppercase; letter-spacing: 0.07em; font-size: 0.7rem; font-weight: 700; }
+.day-tag { font-family: var(--display); text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.85rem; font-weight: 800; color: var(--text-2); }
+
+/* Controls */
+.btn { font-weight: 600; }
+.btn-primary { --btn-border: #9fbf00; }
+.btn-primary:hover { background: var(--primary-hover); border-color: #8fae00; }
+@media (prefers-color-scheme: dark) { .btn-primary { --btn-border: var(--volt); } }
+.btn-lg, .clock-btn { font-family: var(--display); text-transform: uppercase; letter-spacing: 0.05em; font-size: 1.3rem; font-weight: 850; }
+.clock-btn.btn-primary { box-shadow: 0 6px 0 -2px #121211; }
+.clock-btn.btn-primary:active { transform: translateY(3px); box-shadow: 0 3px 0 -2px #121211; }
+.segmented button[aria-pressed="true"], .segmented button[aria-selected="true"] { background: var(--sel-bg); color: var(--sel-fg); box-shadow: none; }
+.segmented button[aria-pressed="true"] .count { color: inherit; opacity: 0.75; }
+.tabs button { text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.85rem; font-weight: 700; }
+.tabs button[aria-selected="true"] { color: var(--text); border-bottom: 3px solid var(--sel-bg); }
+.check input { accent-color: #121211; }
+@media (prefers-color-scheme: dark) { .check input { accent-color: var(--volt); } }
+.effort button[aria-pressed="true"] { background: var(--sel-bg); border-color: var(--sel-bg); color: var(--sel-fg); }
+.pill { font-weight: 650; }
+
+/* Live state */
+.live-dot { width: 11px; height: 11px; background: var(--volt); border: 2px solid #121211; animation: pulse-volt 1.8s infinite; }
+@keyframes pulse-volt { 0% { box-shadow: 0 0 0 0 rgb(212 255 0 / 0.7); } 70% { box-shadow: 0 0 0 8px rgb(212 255 0 / 0); } 100% { box-shadow: 0 0 0 0 rgb(212 255 0 / 0); } }
+
+/* People */
+.avatar { background: #121211; color: var(--volt); }
+@media (prefers-color-scheme: dark) { .avatar { background: #2a2a26; } }
+.avatar.walkin { background: var(--walkin-bg); color: var(--walkin); }
+.list > li.active-row, .result-list > li.selected { background: var(--primary-soft); box-shadow: inset 4px 0 0 var(--sel-bg); }
+.meter > span { background: var(--chart-1); }
+
+/* Sign-in and walk-in pages: the black lobby */
+.auth-page { background: var(--shell); color: var(--shell-text-strong); }
+.auth-brand h1 { font-size: 2.4rem !important; color: #fff; }
+.auth-brand .subtle { color: var(--shell-text); }
+.auth-page .panel { color: var(--text); }
+.auth-page > .auth-card > .subtle, .auth-page section > .subtle { color: var(--shell-text); }
+.auth-page .back-link { color: var(--shell-text); }
+.auth-page .back-link:hover { color: #fff; }
+.demo-accounts button { color: #fff; border-color: var(--shell-2); }
+.demo-accounts button:hover { background: var(--shell-2); border-color: var(--volt); }
+.demo-accounts small { color: var(--shell-text); }
+.auth-panel h2 { font-size: 1.6rem; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 1ms !important; animation-iteration-count: 1 !important; transition-duration: 1ms !important; }
