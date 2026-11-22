@@ -1,51 +1,49 @@
 ---
-name: Gym management, standard dashboard
+name: Gym management, Hi-Vis Training
 mode: operate
 ---
 
-# Design system
+# Design system: Hi-Vis Training
 
-A standard product dashboard, played straight: the task leads and status is never ambiguous. Tokens live in `client/src/styles.css` (`:root`). Change them there, not inline.
+A modern performance gym: a concrete-gray floor, a black shell, and one loud volt accent. Layout and controls stay standard; the personality lives in type, color, and a few signature details. Tokens live in `client/src/styles.css` (`:root`).
 
 ## Scene
-- The clerk uses a front-desk PC under fluorescent light, with keyboard and mouse.
-- Members and coaches use phones on a bright gym floor, often with sweaty hands.
-- So the default theme is light, and dark mode follows the OS.
+- The clerk uses a front-desk PC, and members and coaches use phones on a bright gym floor.
+- So the default theme is light. Dark follows the OS, and there volt becomes the text and selection accent.
 
-## Color (Restrained)
+## Color
 | Role | Light | Use |
 |---|---|---|
-| `--bg` | #f2f4f6 | page ground (cool neutral) |
+| `--volt` | #d4ff00 | primary buttons (black text), the "live / in the gym" dot, page-title tape, the active nav bar. Never text on light. |
+| `--bg` | #e8e7e3 | concrete page ground |
 | `--surface` | #ffffff | panels |
-| `--shell` | #10232a | sidebar and mobile top bar |
-| `--primary` | #0a6862 | primary actions and the current selection only |
-| `--ok` / `--ok-bg` | #17744a / #e2f3e9 | active membership, in the gym, paid |
-| `--warn` / `--warn-bg` | #8f5200 / #fcefd6 | expiring soon, offline, forgot to time out |
-| `--bad` / `--bad-bg` | #b3261e / #fce7e5 | expired, unpaid, errors |
-| `--walkin` / `--walkin-bg` | #5b3fa8 / #efeafb | walk-in identity |
-| `--chart-1..3` | teal / amber / violet | data series |
-
-These state colors mean the same thing on every screen. Never use them for decoration.
+| `--shell` | #111110 | sidebar, mobile top bar, and the sign-in "lobby" |
+| `--sel-bg` / `--sel-fg` | #121211 / volt | selected segment, active tab, selected row bar (inverted in dark) |
+| `--ok` `--warn` `--bad` | green / amber / red | active, expiring, expired/unpaid; the same meaning everywhere |
+| `--walkin` | #5a3ea6 | walk-in identity, including former walk-in visits |
+| charts | black / orange / violet | volt is too light to chart on white |
 
 ## Type
-- System sans stack, one family. Sizes: base 15px (16px on phones, so iOS doesn't zoom on inputs), h1 1.6rem/700, h2 1.15rem/650.
-- Tabular numerals in tables, timers, and money.
-- No display faces, eyebrows, or gradient text.
+- **Big Shoulders Display** (variable, bundled): all-caps h1/h2, scoreboard numbers (facts, timers), the brand, and large buttons.
+- **Barlow** 400–700 (bundled): all body text, labels, and controls.
+- Small labels (table headers, fact labels, nav sections) are uppercase with 0.07em tracking.
+- Fonts come from `@fontsource`, so they work offline.
+
+## Signature details
+- A skewed strip of volt "floor tape" before every page title (hidden when the title has an avatar).
+- Scoreboard numerals for counts, money, and the member's session timer.
+- The Time in button is volt with a black base shadow and physically presses down.
+- The active nav item gets an inset volt bar. The phone tab bar gets a skewed indicator.
+- Avatars: black with volt initials for members, violet for walk-ins.
 
 ## Shape and space
-- Spacing scale: 4/8/12/16/24/32/48.
-- Panels have a 12px radius, a 1px border, and no shadow. Shadows are only for overlays (dialog, toast, sheet).
-- Controls are 44px tall (56px for primary actions on phones), with an 8px radius.
-- Pills (999px radius) are only for status.
+- Spacing scale 4–48px.
+- Panels: 10px radius, 1px border, no shadow. Shadows are only for overlays.
+- Controls are 44px tall (56px for large ones).
 
 ## Components
-`Button` (primary, secondary, ghost, danger), `TextField`, `SelectField`, `Checkbox`, `Segmented`, `Tabs`, `Panel` (the only container; never nested), `Facts` (a one-row summary strip in place of hero-number cards), `StatusPill`, `Notice`, `Empty` (always explains the next step), `Dialog` (native `<dialog>`, only for confirmations), toasts, and SVG `LineChart` / `BarChart`.
-
-## Layout
-- 248px dark sidebar at 960px and wider.
-- Below that: a dark top bar and a bottom tab bar, with a "More" sheet when a role has more than 5 destinations.
-- Tables reflow into labelled rows under 720px (`.table.responsive`).
+`Button`, `TextField`, `SelectField`, `Checkbox`, `Segmented`, `Tabs`, `Panel` (never nested), `Facts`, `StatusPill`, `Notice`, `Empty`, `Dialog`, `ConfirmProvider` / `useConfirm()` (for consequential actions: sign out, stop or take over coaching, archive, deactivate, collecting a plan payment), toasts, `LineChart` / `BarChart`.
 
 ## Motion
 - 150–250ms state transitions, and a 220ms rise on overlays.
-- A pulse on "live" dots. Reduced motion is respected.
+- A volt pulse on live dots. Reduced motion is respected.
