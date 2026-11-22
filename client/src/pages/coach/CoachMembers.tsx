@@ -1,11 +1,12 @@
 import { Search, Users } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
+import { LeagueBadge, LeagueName } from '../../components/ranking';
 import { Avatar, Empty, LoadingRows, PageHeader, Panel, Pill, QueryError, Segmented, StatusPill } from '../../components/ui';
 import { useAuth } from '../../lib/auth';
 import { relativeDay } from '../../lib/format';
 import { useApi, useDebounced, useTitle } from '../../lib/hooks';
-import type { Member } from '../../lib/types';
+import type { League, Member } from '../../lib/types';
 
 export default function CoachMembers() {
   useTitle('Members');
@@ -14,7 +15,7 @@ export default function CoachMembers() {
   const [q, setQ] = useState('');
   const dq = useDebounced(q, 200);
   const nav = useNavigate();
-  const { data, error, refetch, isLoading } = useApi<Member[]>(`/coach/members?scope=${scope}&q=${encodeURIComponent(dq)}`, { placeholderData: (prev) => prev });
+  const { data, error, refetch, isLoading } = useApi<(Member & { league: League | null; strength_score: number | null })[]>(`/coach/members?scope=${scope}&q=${encodeURIComponent(dq)}`, { placeholderData: (prev) => prev });
 
   return (
     <main className="content">
@@ -31,7 +32,7 @@ export default function CoachMembers() {
         {isLoading ? <LoadingRows /> : data?.length ? (
           <div className="table-wrap">
             <table className="table responsive">
-              <thead><tr><th>Member</th><th>Goal</th><th>Membership</th><th>Last visit</th><th>Coach</th></tr></thead>
+              <thead><tr><th>Member</th><th>League</th><th>Goal</th><th>Membership</th><th>Last visit</th><th>Coach</th></tr></thead>
               <tbody>
                 {data.map((m) => (
                   <tr key={m.id} className="clickable" onClick={() => nav(`/coach/members/${m.id}`)}>
@@ -45,6 +46,7 @@ export default function CoachMembers() {
                         {m.inside && <Pill tone="ok">In the gym</Pill>}
                       </div>
                     </td>
+                    <td data-label="League"><span className="row" style={{ gap: 6, flexWrap: 'nowrap' }}><LeagueBadge league={m.league} size={22} /> <LeagueName league={m.league} /></span></td>
                     <td data-label="Goal">{m.goal ?? '—'}</td>
                     <td data-label="Membership"><StatusPill status={m.status} daysLeft={m.days_left} /></td>
                     <td data-label="Last visit">{relativeDay(m.last_visit)}</td>

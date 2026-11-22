@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { AttendanceTable } from '../../components/attendance';
 import { useConfirm } from '../../components/confirm';
+import { LeagueHero, LeagueName, LiftForm, LiftList, RankChip, StrengthBreakdown, StreakWidget, LIFT_NAMES } from '../../components/ranking';
 import { StatsChart, StatsForm, StatsTable } from '../../components/stats';
 import {
   Avatar, Button, Dialog, Empty, Facts, LinkButton, LoadingRows, PageHeader, Panel, Pill, QueryError, StatusPill, Tabs, TextareaField,
@@ -11,7 +12,7 @@ import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
 import { bmiCategory, fmtDate, fmtDateTime, relativeDay } from '../../lib/format';
 import { useAction, useApi, useTitle } from '../../lib/hooks';
-import type { Attendance, Member, Stat, Workout, WorkoutLog } from '../../lib/types';
+import type { Attendance, LiftLog, Member, RankEntry, Stat, Strength, Streak, Workout, WorkoutLog } from '../../lib/types';
 import { ExerciseTable } from '../member/MemberWorkouts';
 
 interface Detail {
@@ -21,6 +22,42 @@ interface Detail {
   logs: WorkoutLog[];
   attendance: Attendance[];
   visits: { this_month: number; total_visits: number; week_streak: number };
+  strength: Strength;
+  lifts: LiftLog[];
+  streak: Streak;
+  ranks: { points: RankEntry | null; strength: RankEntry | null; streak: RankEntry | null };
+}
+
+function StrengthTab({ detail, path }: { detail: Detail; path: string }) {
+  const confirm = useConfirm();
+  const [remove] = useAction((id: number) => api(`/coach/lifts/${id}`, { method: 'DELETE' }), { success: 'Lift deleted', invalidate: [path, '/leaderboard', '/coach'] });
+  const first = detail.profile.full_name.split(' ')[0];
+  return (
+    <div className="grid grid-main">
+      <div className="stack">
+        <Panel><LeagueHero strength={detail.strength} /></Panel>
+        <div className="rank-chips">
+          <RankChip label="Gym points (month)" rank={detail.ranks.points?.rank} />
+          <RankChip label="Strength" rank={detail.ranks.strength?.rank} />
+          <RankChip label="Streak" rank={detail.ranks.streak?.rank} />
+        </div>
+        <Panel title="Strength by lift" description={detail.strength.bodyweight ? `Scored against ${detail.strength.bodyweight} kg bodyweight${detail.strength.gender ? ` (${detail.strength.gender.toLowerCase()} standards)` : ''}.` : `Log ${first}’s bodyweight under Body stats to score lifts.`} bodyClass={null}>
+          <StrengthBreakdown lifts={detail.strength.lifts} />
+        </Panel>
+        <Panel title="Lift history" bodyClass={null}>
+          <LiftList lifts={detail.lifts} canDelete={() => true} onDelete={async (l) => {
+            if (await confirm({ title: `Delete this ${LIFT_NAMES[l.exercise].toLowerCase()}?`, description: `${first}’s league and points are recalculated without it.`, confirmLabel: 'Delete lift', tone: 'danger' })) void remove(l.id);
+          }} />
+        </Panel>
+      </div>
+      <div className="stack">
+        <Panel title="Log a tested lift" description={`Recorded for ${detail.profile.full_name}. A new best earns them 25 points.`}>
+          <LiftForm endpoint={`${path}/lifts`} invalidate={[path, '/leaderboard', '/coach']} />
+        </Panel>
+        <Panel title="Streak"><StreakWidget streak={detail.streak} compact /></Panel>
+      </div>
+    </div>
+  );
 }
 
 function CoachNotes({ member }: { member: Member }) {
@@ -113,7 +150,7 @@ export default function CoachMember() {
   const { user } = useAuth();
   const path = `/coach/members/${id}`;
   const { data, error, refetch } = useApi<Detail>(path);
-  const [tab, setTab] = useState<'overview' | 'workouts' | 'stats' | 'visits'>('overview');
+  const [tab, setTab] = useState<'overview' | 'workouts' | 'strength' | 'stats' | 'visits'>('overview');
   useTitle(data?.profile.full_name ?? 'Member');
   const confirm = useConfirm();
   const [assign, assigning] = useAction((v: boolean) => api(`${path}/assign`, { method: 'POST', body: { assign: v } }), {
@@ -153,13 +190,14 @@ export default function CoachMember() {
 
       <Tabs value={tab} onChange={setTab} tabs={[
         { value: 'overview', label: 'Overview' }, { value: 'workouts', label: `Workouts (${data.workouts.filter((w) => w.status === 'active').length})` },
-        { value: 'stats', label: 'Body stats' }, { value: 'visits', label: 'Attendance' },
+        { value: 'strength', label: 'Strength & league' }, { value: 'stats', label: 'Body stats' }, { value: 'visits', label: 'Attendance' },
       ]} />
 
       {tab === 'overview' && (
         <div className="grid grid-main">
           <div className="stack">
             <Facts items={[
+              { label: 'League', value: <LeagueName league={data.strength.league} />, note: data.strength.score !== null ? `Score ${data.strength.score}` : 'No lifts logged' },
               { label: 'Weight', value: latest?.weight_kg ? `${latest.weight_kg} kg` : '—', note: latest ? `Logged ${fmtDate(latest.recorded_on)}` : 'No entries' },
               { label: 'BMI', value: latest?.bmi ?? '—', note: bmi.label || undefined },
               { label: 'Body fat', value: latest?.body_fat_pct ? `${latest.body_fat_pct}%` : '—' },
@@ -181,6 +219,7 @@ export default function CoachMember() {
         </div>
       )}
       {tab === 'workouts' && <WorkoutList detail={data} />}
+      {tab === 'strength' && <StrengthTab detail={data} path={path} />}
       {tab === 'stats' && (
         <div className="grid grid-main">
           <Panel title="All entries" bodyClass={null}>
