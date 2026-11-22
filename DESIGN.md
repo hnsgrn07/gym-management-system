@@ -44,6 +44,13 @@ A modern performance gym: a concrete-gray floor, a black shell, and one loud vol
 ## Components
 `Button`, `TextField`, `SelectField`, `Checkbox`, `Segmented`, `Tabs`, `Panel` (never nested), `Facts`, `StatusPill`, `Notice`, `Empty`, `Dialog`, `ConfirmProvider` / `useConfirm()` (for consequential actions: sign out, stop or take over coaching, archive, deactivate, collecting a plan payment), toasts, `LineChart` / `BarChart`.
 
+## Leagues and leaderboards
+- League colors are the only exception to the restrained palette, and they appear only on league crests, league names and progress fills: Iron #5d6168, Bronze #a5622f, Silver #8f99a3, Gold #d19a0b, Platinum #2f9e96, Diamond #4a78e0, Elite black with volt.
+- `LeagueBadge` is a vector shield showing the division numeral (Elite shows a crown).
+- The podium uses black for 1st with a volt numeral, then graphite for 2nd and 3rd.
+- The streak week dots fill with volt on visited days, and today's dot is outlined.
+- The viewer's own leaderboard row gets the selection tint plus an inset bar.
+
 ## Motion
 - 150–250ms state transitions, and a 220ms rise on overlays.
 - A volt pulse on live dots. Reduced motion is respected.
