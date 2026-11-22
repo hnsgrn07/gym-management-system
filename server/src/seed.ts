@@ -222,6 +222,7 @@ export function seedDemoLifts() {
       });
     }
   }
+  seedDemoCoachLifts();
 }
 
 if (process.argv[1]?.endsWith('seed.ts')) {
@@ -234,4 +235,25 @@ if (process.argv[1]?.endsWith('seed.ts')) {
   }
   seedDemo();
   console.log('Demo data loaded.');
+}
+
+/** Demo coaches are lifters too: fictional numbers for the coaches' strength board. */
+export function seedDemoCoachLifts() {
+  const coaches: [string, 'Male' | 'Female', number, [LiftKey, number, number][]][] = [
+    ['coach', 'Male', 84, [['squat', 170, 3], ['bench', 120, 3], ['deadlift', 210, 2], ['ohp', 75, 3], ['pullup', 15, 8]]],
+    ['dana', 'Female', 63, [['squat', 105, 3], ['bench', 62.5, 3], ['deadlift', 130, 2], ['ohp', 42.5, 3], ['pullup', 0, 9]]],
+  ];
+  const today = localDate();
+  for (const [username, gender, bw, lifts] of coaches) {
+    const u = get<{ id: number }>("SELECT id FROM users WHERE username = ? AND role = 'coach'", username);
+    if (!u || get('SELECT 1 FROM lift_logs WHERE member_id = ?', u.id)) continue;
+    run('UPDATE users SET gender = ? WHERE id = ?', gender, u.id);
+    run('INSERT INTO body_stats (member_id, recorded_on, weight_kg, recorded_by) VALUES (?, ?, ?, ?)', u.id, addDays(today, -15), bw, u.id);
+    for (const [exercise, kg, reps] of lifts) {
+      [0.92, 1].forEach((f, i) => {
+        const weight = exercise === 'pullup' ? kg : Math.round((kg * f) / 2.5) * 2.5;
+        logLift(u.id, { exercise, weight_kg: weight, reps, performed_on: addDays(today, -30 + i * 20) }, u.id);
+      });
+    }
+  }
 }
