@@ -166,7 +166,7 @@ export function LiftList({ lifts, canDelete, onDelete }: { lifts: LiftLog[]; can
             <strong>{LIFT_NAMES[l.exercise]}</strong> {l.is_pr ? <Pill tone="primary" plain>PR</Pill> : null}
             <div className="subtle">
               {l.exercise === 'pullup' ? `${l.reps} reps${l.weight_kg ? ` +${l.weight_kg} kg` : ''}` : `${l.weight_kg} kg × ${l.reps}`} · {fmtDate(l.performed_on, { month: 'short', day: 'numeric' })}
-              {l.recorded_by_role && l.recorded_by_role !== 'member' && l.recorded_by_name ? ` · by ${l.recorded_by_name}` : ''}
+              {l.recorded_by !== l.member_id && l.recorded_by_role && l.recorded_by_role !== 'member' && l.recorded_by_name ? ` · by ${l.recorded_by_name}` : ''}
             </div>
           </div>
           {onDelete && canDelete?.(l) && <Button size="sm" variant="ghost" icon={Trash2} aria-label="Delete lift" onClick={() => onDelete(l)} />}

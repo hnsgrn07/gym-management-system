@@ -26,6 +26,7 @@ const NAV: Record<Role, NavItem[]> = {
   ],
   coach: [
     { to: '/coach', label: 'Members', icon: Users, end: true },
+    { to: '/coach/ranks', label: 'My ranks', short: 'Ranks', icon: Medal },
     { to: '/leaderboard', label: 'Leaderboard', short: 'Board', icon: Trophy },
     { to: '/account', label: 'Account', icon: UserRound },
   ],

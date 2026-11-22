@@ -192,6 +192,7 @@ export interface Strength {
 
 export interface LiftLog {
   id: number;
+  member_id: number;
   exercise: LiftKey;
   weight_kg: number;
   reps: number;
