@@ -20,6 +20,7 @@ interface Overview {
   streak: Streak;
   league: League | null;
   points_rank: RankEntry | null;
+  coach_league: League | null;
 }
 
 /** Pick today's workout: one labelled with today's weekday, otherwise the one done least recently. */
@@ -50,7 +51,9 @@ export default function MemberToday() {
 
   return (
     <main className="content">
-      <PageHeader title={`${greeting()}, ${user?.full_name.split(' ')[0]}`} description={p ? `Member ${p.member_code}${p.coach_name ? ` · Coach ${p.coach_name}` : ''}` : undefined} />
+      <PageHeader title={`${greeting()}, ${user?.full_name.split(' ')[0]}`} description={p ? <span className="row" style={{ gap: 6 }}>
+        Member {p.member_code}{p.coach_name && <> · Coach {p.coach_name}{data?.coach_league && <><LeagueBadge league={data.coach_league} size={18} /><LeagueName league={data.coach_league} /></>}</>}
+      </span> : undefined} />
 
       {p?.status === 'expiring' && (
         <Notice tone="warn" title={`Your membership ends ${fmtDate(p.paid_through)}`}>Renew at the front desk to keep training without a gap.</Notice>
