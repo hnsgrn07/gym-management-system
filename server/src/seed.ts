@@ -5,6 +5,8 @@
 import { db, migrate, run, tx } from './db.ts';
 import { hashPassword } from './auth.ts';
 import { saveSettings } from './services/settings.ts';
+import { logLift, type LiftKey } from './services/ranking.ts';
+import { get } from './db.ts';
 import { addDays, localDate, localDateTime } from './util.ts';
 
 // Deterministic PRNG so the demo looks the same every time.
@@ -187,6 +189,39 @@ export function seedDemo() {
     run('UPDATE members SET coach_notes = ? WHERE user_id = ?',
       'Old left-knee strain (2023). Prefers evening sessions. Goal: drop to 80 kg by the next quarter.', memberIds[0]);
   });
+  seedDemoLifts();
+}
+
+/** Demo strength history so leagues and leaderboards have something to show. Fictional numbers. */
+export function seedDemoLifts() {
+  // member code → [bodyweight if none logged, [lift, kg, reps][] best sets]
+  const plan: Record<string, [number, [LiftKey, number, number][]]> = {
+    'M-0001': [82, [['squat', 110, 5], ['bench', 85, 5], ['deadlift', 140, 3], ['ohp', 50, 5], ['pullup', 0, 9]]],
+    'M-0002': [62, [['squat', 60, 5], ['bench', 35, 6], ['deadlift', 75, 5], ['pullup', 0, 2]]],
+    'M-0003': [91, [['squat', 160, 3], ['bench', 120, 3], ['deadlift', 200, 2], ['ohp', 75, 3], ['pullup', 10, 8]]],
+    'M-0004': [58, [['squat', 70, 5], ['deadlift', 90, 3], ['bench', 40, 5]]],
+    'M-0005': [70, [['squat', 80, 8], ['bench', 70, 5], ['pullup', 0, 12]]],
+    'M-0006': [68, [['squat', 85, 5], ['bench', 47.5, 5], ['deadlift', 110, 3], ['ohp', 35, 5]]],
+    'M-0008': [55, [['squat', 45, 8], ['bench', 25, 8]]],
+    'M-0009': [76, [['bench', 60, 8], ['squat', 90, 5]]],
+    'M-0011': [77, [['squat', 140, 3], ['bench', 100, 2], ['deadlift', 180, 1], ['ohp', 62.5, 3], ['pullup', 0, 15]]],
+  };
+  const today = localDate();
+  for (const [code, [bw, lifts]] of Object.entries(plan)) {
+    const m = get<{ id: number }>('SELECT user_id AS id FROM members WHERE member_code = ?', code);
+    if (!m) continue;
+    if (!get('SELECT 1 FROM body_stats WHERE member_id = ? AND weight_kg IS NOT NULL', m.id)) {
+      run('INSERT INTO body_stats (member_id, recorded_on, weight_kg, recorded_by) VALUES (?, ?, ?, ?)', m.id, addDays(today, -20), bw, m.id);
+    }
+    for (const [exercise, kg, reps] of lifts) {
+      // Three sessions over six weeks, building up to the best set.
+      [0.85, 0.93, 1].forEach((f, i) => {
+        const weight = exercise === 'pullup' ? kg : Math.round((kg * f) / 2.5) * 2.5;
+        const r = exercise === 'pullup' ? Math.max(1, Math.round(reps * f)) : reps;
+        logLift(m.id, { exercise, weight_kg: weight, reps: r, performed_on: addDays(today, -40 + i * 18) }, m.id);
+      });
+    }
+  }
 }
 
 if (process.argv[1]?.endsWith('seed.ts')) {
