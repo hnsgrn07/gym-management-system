@@ -1,11 +1,12 @@
-import { ArrowRight, CalendarCheck, Dumbbell, Flame, Scale } from 'lucide-react';
+import { ArrowRight, Dumbbell, Scale } from 'lucide-react';
+import { LeagueBadge, LeagueName, StreakWidget } from '../../components/ranking';
 import { useState } from 'react';
 import { Link } from 'react-router';
-import { Empty, Facts, LinkButton, Notice, PageHeader, Panel, QueryError, Skeleton, StatusPill } from '../../components/ui';
+import { Empty, LinkButton, Notice, PageHeader, Panel, QueryError, Skeleton, StatusPill } from '../../components/ui';
 import { useAuth } from '../../lib/auth';
 import { bmiCategory, fmtDate, fmtDateTime, greeting, localDateTime, WEEKDAYS } from '../../lib/format';
 import { useApi, useTitle } from '../../lib/hooks';
-import type { Member, Stat, Workout, WorkoutLog } from '../../lib/types';
+import type { League, Member, RankEntry, Stat, Streak, Workout, WorkoutLog } from '../../lib/types';
 import { TimeClock } from './shared';
 
 interface Overview {
@@ -16,6 +17,9 @@ interface Overview {
   previous_stats: Stat | null;
   workouts: Workout[];
   recent_logs: WorkoutLog[];
+  streak: Streak;
+  league: League | null;
+  points_rank: RankEntry | null;
 }
 
 /** Pick today's workout: one labelled with today's weekday, otherwise the one done least recently. */
@@ -92,10 +96,24 @@ export default function MemberToday() {
         </div>
 
         <div className="stack">
-          <Facts items={[
-            { label: <><CalendarCheck size={15} /> Visits this month</>, value: data?.visits.this_month ?? '–', note: data ? `${data.visits.total_visits} all time` : undefined },
-            { label: <><Flame size={15} /> Week streak</>, value: data ? `${data.visits.week_streak} wk` : '–', note: 'Weeks in a row with a visit' },
-          ]} />
+          <Panel title="Streak" description={data ? `${data.visits.this_month} visits this month · ${data.visits.total_visits} all time` : undefined}>
+            {data ? <StreakWidget streak={data.streak} compact /> : <Skeleton h={110} />}
+          </Panel>
+
+          <Panel title="League & rank" actions={<LinkButton to="/member/ranks" size="sm" variant="ghost">Ranks <ArrowRight size={16} /></LinkButton>}>
+            {data ? (
+              <div className="row" style={{ flexWrap: 'nowrap', gap: 'var(--s4)' }}>
+                <LeagueBadge league={data.league} size={56} />
+                <div className="stack-sm" style={{ gap: 2 }}>
+                  <div className="league-title" style={{ fontSize: '1.6rem' }}><LeagueName league={data.league} /></div>
+                  <span className="subtle">
+                    {data.points_rank ? <>#{data.points_rank.rank} in gym points this month · {data.points_rank.value} pts</> : 'Visit and log workouts to earn points'}
+                  </span>
+                  {!data.league && <Link to="/member/ranks" className="subtle">Log a lift to get placed</Link>}
+                </div>
+              </div>
+            ) : <Skeleton h={60} />}
+          </Panel>
 
           <Panel title="Body stats" actions={<LinkButton to="/member/progress" size="sm" variant="ghost">Progress <ArrowRight size={16} /></LinkButton>}>
             {latest ? (

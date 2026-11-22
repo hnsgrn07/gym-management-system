@@ -1,6 +1,6 @@
 import {
   BarChart3, CalendarDays, ClipboardList, CloudOff, Dumbbell, Ellipsis, History, House, LogOut,
-  MonitorCheck, RefreshCw, ScrollText, Settings, Tags, TrendingUp, UserCog, UserRound, Users, type LucideIcon,
+  Medal, MonitorCheck, RefreshCw, ScrollText, Settings, Tags, Trophy, TrendingUp, UserCog, UserRound, Users, type LucideIcon,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router';
@@ -18,12 +18,15 @@ const NAV: Record<Role, NavItem[]> = {
   member: [
     { to: '/member', label: 'Today', icon: House, end: true },
     { to: '/member/workouts', label: 'Workouts', icon: Dumbbell },
+    { to: '/member/ranks', label: 'Ranks', icon: Medal },
+    { to: '/leaderboard', label: 'Leaderboard', short: 'Board', icon: Trophy },
     { to: '/member/progress', label: 'Progress', icon: TrendingUp },
     { to: '/member/history', label: 'History', icon: History },
     { to: '/account', label: 'Account', icon: UserRound },
   ],
   coach: [
     { to: '/coach', label: 'Members', icon: Users, end: true },
+    { to: '/leaderboard', label: 'Leaderboard', short: 'Board', icon: Trophy },
     { to: '/account', label: 'Account', icon: UserRound },
   ],
   clerk: [
@@ -38,6 +41,7 @@ const NAV: Record<Role, NavItem[]> = {
     { to: '/desk/members', label: 'Members', icon: Users },
     { to: '/desk/log', label: 'Daily log', short: 'Log', icon: CalendarDays },
     { to: '/coach', label: 'Coaching', icon: ClipboardList },
+    { to: '/leaderboard', label: 'Leaderboard', short: 'Board', icon: Trophy },
     { to: '/admin/plans', label: 'Plans & pricing', short: 'Plans', icon: Tags, section: 'Manage' },
     { to: '/admin/staff', label: 'Staff accounts', short: 'Staff', icon: UserCog },
     { to: '/admin/settings', label: 'Gym settings', short: 'Settings', icon: Settings },

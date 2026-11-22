@@ -12,6 +12,8 @@ const MemberToday = lazy(() => import('./pages/member/MemberToday'));
 const MemberWorkouts = lazy(() => import('./pages/member/MemberWorkouts'));
 const MemberProgress = lazy(() => import('./pages/member/MemberProgress'));
 const MemberHistory = lazy(() => import('./pages/member/MemberHistory'));
+const MemberRanks = lazy(() => import('./pages/member/MemberRanks'));
+const Leaderboard = lazy(() => import('./pages/Leaderboard'));
 const CoachMembers = lazy(() => import('./pages/coach/CoachMembers'));
 const CoachMember = lazy(() => import('./pages/coach/CoachMember'));
 const WorkoutEditor = lazy(() => import('./pages/coach/WorkoutEditor'));
@@ -53,6 +55,8 @@ export function App() {
         <Route path="/member" element={<RequireRole roles={['member']}>{page(<MemberToday />)}</RequireRole>} />
         <Route path="/member/workouts" element={<RequireRole roles={['member']}>{page(<MemberWorkouts />)}</RequireRole>} />
         <Route path="/member/progress" element={<RequireRole roles={['member']}>{page(<MemberProgress />)}</RequireRole>} />
+        <Route path="/member/ranks" element={<RequireRole roles={['member']}>{page(<MemberRanks />)}</RequireRole>} />
+        <Route path="/leaderboard" element={<RequireRole roles={['member', 'coach', 'admin']}>{page(<Leaderboard />)}</RequireRole>} />
         <Route path="/member/history" element={<RequireRole roles={['member']}>{page(<MemberHistory />)}</RequireRole>} />
 
         <Route path="/coach" element={<RequireRole roles={coaches}>{page(<CoachMembers />)}</RequireRole>} />
