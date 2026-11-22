@@ -641,6 +641,78 @@ dialog.dialog[open] { animation: rise 220ms var(--ease-out); }
 .demo-accounts small { color: var(--shell-text); }
 .auth-panel h2 { font-size: 1.6rem; }
 
+/* ==========================================================================
+   Leagues, streaks, leaderboards
+   ========================================================================== */
+:root {
+  --lg-iron: #5d6168; --lg-bronze: #a5622f; --lg-silver: #8f99a3; --lg-gold: #d19a0b;
+  --lg-platinum: #2f9e96; --lg-diamond: #4a78e0; --lg-elite: #121211; --lg-none: #b9b6ae;
+}
+.league-badge { flex: none; filter: drop-shadow(0 2px 0 rgb(0 0 0 / 0.25)); }
+.league-badge .lb-outer { fill: var(--lg); }
+.league-badge .lb-inner { fill: none; stroke: rgb(255 255 255 / 0.55); stroke-width: 2.5; }
+.league-badge .lb-text { fill: #fff; font-family: var(--display); font-weight: 900; font-size: 24px; letter-spacing: 1px; }
+.league-badge .lb-mark { color: var(--volt); }
+.lg-iron { --lg: var(--lg-iron); } .lg-bronze { --lg: var(--lg-bronze); } .lg-silver { --lg: var(--lg-silver); }
+.lg-gold { --lg: var(--lg-gold); } .lg-platinum { --lg: var(--lg-platinum); } .lg-diamond { --lg: var(--lg-diamond); }
+.lg-elite { --lg: var(--lg-elite); } .lg-none { --lg: var(--lg-none); }
+.league-badge.lg-elite .lb-inner { stroke: var(--volt); }
+@media (prefers-color-scheme: dark) { .lg-elite { --lg: #000; } .league-badge.lg-elite .lb-outer { stroke: var(--volt); stroke-width: 2; } }
+
+.league-name { font-family: var(--display); text-transform: uppercase; font-weight: 850; letter-spacing: 0.02em; color: var(--lg); }
+.lg-elite.league-name { color: var(--text); background: linear-gradient(transparent 60%, var(--volt) 60%); padding: 0 2px; }
+.league-hero { display: flex; align-items: center; gap: var(--s5); }
+.league-title { font-size: 2.4rem; line-height: 1; }
+.league-title .league-name { color: var(--lg); }
+.score-num { font-family: var(--display); font-weight: 850; font-size: 1.6rem; line-height: 1; }
+.league-track { height: 10px; border-radius: 5px; background: var(--surface-hover); overflow: hidden; }
+.league-track .lg-fill { display: block; height: 100%; background: var(--lg); border-radius: inherit; transition: width 600ms var(--ease-out); }
+@media (max-width: 720px) { .league-hero { gap: var(--s4); } .league-title { font-size: 1.9rem; } }
+
+.ladder { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(7, 1fr); gap: var(--s1); }
+.ladder li { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-3); opacity: 0.45; }
+.ladder li.done { opacity: 0.8; }
+.ladder li.here { opacity: 1; color: var(--text); }
+.ladder li.here .league-badge { transform: scale(1.25); }
+
+.lift-row .lift-score { font-family: var(--display); font-weight: 850; font-size: 1.35rem; line-height: 1; }
+.lift-bar { height: 6px; border-radius: 3px; background: var(--surface-hover); margin: 6px 0 4px; overflow: hidden; }
+.lift-bar > span { display: block; height: 100%; background: var(--chart-1); border-radius: inherit; }
+
+.rank-chips { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--s2); }
+.rank-chip { display: flex; flex-direction: column; padding: var(--s3) var(--s4); border-radius: var(--radius-sm); background: var(--surface-2); border: 1px solid var(--border); }
+.rank-num { font-family: var(--display); font-weight: 850; font-size: 1.9rem; line-height: 1; }
+
+.streak { display: flex; flex-direction: column; gap: var(--s4); }
+.streak-head { display: flex; align-items: center; gap: var(--s3); }
+.streak-flame { width: 52px; height: 52px; border-radius: 14px; display: grid; place-items: center; background: var(--surface-hover); color: var(--text-3); flex: none; }
+.streak.lit .streak-flame { background: #121211; color: var(--volt); }
+.streak-num { font-family: var(--display); font-weight: 850; font-size: 2.4rem; line-height: 0.95; text-transform: uppercase; }
+.streak-num span { font-size: 1.1rem; margin-left: 4px; }
+.week-dots { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.week-dots li { aspect-ratio: 1; max-height: 44px; border-radius: 10px; display: grid; place-items: center; background: var(--surface-hover); color: var(--text-3); font-weight: 700; font-size: 0.8rem; }
+.week-dots li.on { background: var(--volt); color: #121211; }
+.week-dots li.today { outline: 2px solid var(--text); outline-offset: -2px; color: var(--text); }
+.week-dots li.future { opacity: 0.5; }
+
+/* Leaderboard */
+.podium { display: grid; grid-template-columns: 1fr 1.15fr 1fr; align-items: end; gap: var(--s3); padding: var(--s5) var(--s5) 0; }
+.podium-spot { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; min-width: 0; }
+.podium-spot .who { font-weight: 700; line-height: 1.2; overflow-wrap: anywhere; }
+.podium-spot .val { font-family: var(--display); font-weight: 850; font-size: 1.5rem; line-height: 1; }
+.podium-block { width: 100%; border-radius: 10px 10px 0 0; display: grid; place-items: center; font-family: var(--display); font-weight: 900; font-size: 2rem; color: #fff; background: #3a3a37; }
+.podium-spot.p1 .podium-block { height: 96px; background: #121211; color: var(--volt); }
+.podium-spot.p2 .podium-block { height: 70px; }
+.podium-spot.p3 .podium-block { height: 52px; background: #5a5954; }
+.podium-spot.me .who { text-decoration: underline 3px var(--volt); text-underline-offset: 4px; }
+.board-row { display: grid; grid-template-columns: 44px 1fr auto; align-items: center; gap: var(--s3); }
+.board-rank { font-family: var(--display); font-weight: 850; font-size: 1.35rem; text-align: center; color: var(--text-2); }
+.board-val { font-family: var(--display); font-weight: 850; font-size: 1.4rem; text-align: right; line-height: 1; }
+.board-val small { display: block; font-family: var(--font); font-weight: 500; font-size: 0.72rem; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.06em; }
+.list > li.me-row { background: var(--primary-soft); box-shadow: inset 4px 0 0 var(--sel-bg); }
+.my-rank-bar { position: sticky; bottom: 0; z-index: 5; }
+@media (max-width: 959px) { .my-rank-bar { bottom: calc(64px + env(safe-area-inset-bottom)); } }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 1ms !important; animation-iteration-count: 1 !important; transition-duration: 1ms !important; }
 }

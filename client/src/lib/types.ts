@@ -159,3 +159,67 @@ export interface WalkinResult {
   visits: number;
   inside: number;
 }
+
+export interface League {
+  key: 'iron' | 'bronze' | 'silver' | 'gold' | 'platinum' | 'diamond' | 'elite';
+  name: string;
+  tier: number;
+  division: 'I' | 'II' | 'III' | null;
+  progress: number;
+  next: { name: string; needed: number } | null;
+}
+
+export type LiftKey = 'squat' | 'bench' | 'deadlift' | 'ohp' | 'pullup';
+
+export interface LiftScore {
+  key: LiftKey;
+  name: string;
+  best: { weight_kg: number; reps: number; e1rm: number; performed_on: string } | null;
+  ratio: number | null;
+  score: number | null;
+  level: string | null;
+  next_level: { name: string; target: number } | null;
+}
+
+export interface Strength {
+  bodyweight: number | null;
+  gender: string | null;
+  lifts: LiftScore[];
+  lifts_logged: number;
+  score: number | null;
+  league: League | null;
+}
+
+export interface LiftLog {
+  id: number;
+  exercise: LiftKey;
+  weight_kg: number;
+  reps: number;
+  e1rm: number;
+  is_pr: number;
+  performed_on: string;
+  notes: string | null;
+  recorded_by: number | null;
+  recorded_by_name: string | null;
+  recorded_by_role: Role | null;
+}
+
+export interface Streak {
+  current: number;
+  best: number;
+  at_risk: boolean;
+  visits_this_week: number;
+  week: { date: string; visited: boolean; today: boolean; future: boolean }[];
+}
+
+export interface RankEntry {
+  member_id: number;
+  full_name: string;
+  member_code: string;
+  value: number;
+  detail: string;
+  league: League | null;
+  rank: number;
+  is_me: boolean;
+  hidden?: boolean;
+}
