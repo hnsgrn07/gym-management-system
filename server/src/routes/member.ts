@@ -7,6 +7,7 @@ import {
   addStats, getMember, listStats, listWorkouts, memberAttendance, memberMemberships, statsSchema,
   visitSummary, workoutLogs,
 } from '../services/members.ts';
+import { leaderboard, liftSchema, logLift, rankCard, recentLifts, strengthProfile, streakWidget } from '../services/ranking.ts';
 import { HttpError, parse, toId } from '../util.ts';
 
 /** The signed-in member's own data. */
@@ -24,7 +25,33 @@ memberRouter.get('/overview', (req, res) => {
     previous_stats: stats.at(-2) ?? null,
     workouts: listWorkouts(id),
     recent_logs: workoutLogs(id, 5),
+    streak: streakWidget(id),
+    league: strengthProfile(id).league,
+    points_rank: leaderboard('points', 'month', id).me,
   });
+});
+
+memberRouter.get('/ranks', (req, res) => {
+  const id = me(req).id;
+  res.json({ ...rankCard(id), recent_lifts: recentLifts(id, 30) });
+});
+
+memberRouter.post('/lifts', (req, res) => {
+  const id = me(req).id;
+  res.status(201).json(logLift(id, parse(liftSchema, req.body), id));
+});
+
+memberRouter.delete('/lifts/:id', (req, res) => {
+  const id = me(req).id;
+  const r = run('DELETE FROM lift_logs WHERE id = ? AND member_id = ? AND recorded_by = ?', toId(req.params.id), id, id);
+  if (!r.changes) throw new HttpError(404, 'You can only delete lifts you logged yourself.');
+  res.json({ ok: true });
+});
+
+memberRouter.patch('/leaderboard', (req, res) => {
+  const { show } = parse(z.object({ show: z.boolean() }), req.body);
+  run('UPDATE members SET show_on_leaderboard = ? WHERE user_id = ?', show, me(req).id);
+  res.json({ ok: true });
 });
 
 memberRouter.post('/attendance/toggle', (req, res) => {

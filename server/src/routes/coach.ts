@@ -6,6 +6,7 @@ import {
   addStats, getMember, listStats, listWorkouts, memberAttendance, saveWorkout, searchMembers, statsSchema,
   visitSummary, workoutLogs, workoutSchema,
 } from '../services/members.ts';
+import { leagueMap, leaderboard, liftSchema, logLift, recentLifts, strengthProfile, streakWidget } from '../services/ranking.ts';
 import { HttpError, parse, toId } from '../util.ts';
 
 /** Coaches (and admins) read member data and build workouts for them. */
@@ -15,7 +16,9 @@ coachRouter.use(requireRole('coach', 'admin'));
 coachRouter.get('/members', (req, res) => {
   const q = typeof req.query.q === 'string' ? req.query.q : undefined;
   const mine = req.query.scope === 'mine';
-  res.json(searchMembers({ q, coachId: mine ? me(req).id : undefined }));
+  const list = searchMembers({ q, coachId: mine ? me(req).id : undefined });
+  const leagues = leagueMap(list.map((m) => m.id));
+  res.json(list.map((m) => ({ ...m, league: leagues.get(m.id)!.league, strength_score: leagues.get(m.id)!.score })));
 });
 
 coachRouter.get('/members/:id', (req, res) => {
@@ -27,7 +30,29 @@ coachRouter.get('/members/:id', (req, res) => {
     logs: workoutLogs(id, 30),
     attendance: memberAttendance(id, 30),
     visits: visitSummary(id),
+    strength: strengthProfile(id),
+    lifts: recentLifts(id, 30),
+    streak: streakWidget(id),
+    ranks: {
+      points: leaderboard('points', 'month', id).me,
+      strength: leaderboard('strength', 'all', id).me,
+      streak: leaderboard('streak', 'all', id).me,
+    },
   });
+});
+
+coachRouter.post('/members/:id/lifts', (req, res) => {
+  const id = toId(req.params.id);
+  getMember(id);
+  const result = logLift(id, parse(liftSchema, req.body), me(req).id);
+  audit(me(req).id, 'lift.log', `member #${id}`);
+  res.status(201).json(result);
+});
+
+coachRouter.delete('/lifts/:id', (req, res) => {
+  const r = run('DELETE FROM lift_logs WHERE id = ?', toId(req.params.id));
+  if (!r.changes) throw new HttpError(404, 'Lift not found.');
+  res.json({ ok: true });
 });
 
 coachRouter.post('/members/:id/stats', (req, res) => {
